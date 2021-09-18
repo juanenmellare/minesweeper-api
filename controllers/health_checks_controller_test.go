@@ -8,16 +8,16 @@ import (
 	"testing"
 )
 
-func TestNewHealthCheckController(t *testing.T) {
-	assert.Implements(t, (*HealthCheckController)(nil), NewHealthCheckController())
+func TestNewHealthChecksController(t *testing.T) {
+	assert.Implements(t, (*HealthChecksController)(nil), NewHealthChecksController())
 }
 
-func Test_healthCheckControllerImpl_Ping(t *testing.T) {
+func Test_healthChecksControllerImpl_Ping(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 
-	healthCheckController := NewHealthCheckController()
-	healthCheckController.Ping(c)
+	healthChecksController := NewHealthChecksController()
+	healthChecksController.Ping(c)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Equal(t, "{\"message\":\"pong\"}", w.Body.String())
