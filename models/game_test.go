@@ -37,5 +37,3 @@ func TestNewGame_err(t *testing.T) {
 	assert.Nil(t, game)
 	assert.NotNil(t, err)
 }
-
-
