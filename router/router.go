@@ -10,6 +10,5 @@ func New() *gin.Engine {
 
 	router.GET("/ping", controllers.NewHealthChecksController().Ping)
 
-
 	return router
 }
