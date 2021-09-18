@@ -5,17 +5,17 @@ import (
 	"net/http"
 )
 
-type HealthCheckController interface {
+type HealthChecksController interface {
 	Ping(context *gin.Context)
 }
 
-type healthCheckControllerImpl struct{}
+type healthChecksControllerImpl struct{}
 
-func NewHealthCheckController() HealthCheckController {
-	return &healthCheckControllerImpl{}
+func NewHealthChecksController() HealthChecksController {
+	return &healthChecksControllerImpl{}
 }
 
-func (h healthCheckControllerImpl) Ping(context *gin.Context) {
+func (h healthChecksControllerImpl) Ping(context *gin.Context) {
 	context.JSON(http.StatusOK, gin.H{
 		"message": "pong",
 	})
