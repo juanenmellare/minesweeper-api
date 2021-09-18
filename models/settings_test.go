@@ -33,4 +33,3 @@ func TestSettings_Validate_bombs_quantity(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Equal(t, "minefield bombs quantity must not be less than 1", err.Error())
 }
-
