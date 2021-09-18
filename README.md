@@ -9,3 +9,13 @@ Golang 1.16
 ```bash
 go test ./...
 ```
+
+### Run Linter
+```bash
+gofmt -s -w .
+```
+
+### Run API
+```bash
+go run . 
+```
