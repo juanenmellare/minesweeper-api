@@ -12,7 +12,7 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	DomainLayersFactory := factories.NewDomainLayersFactory()
+	DomainLayersFactory := factories.NewDomainLayersFactory(nil)
 	engine := New(DomainLayersFactory)
 	s := httptest.NewServer(engine)
 

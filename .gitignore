@@ -16,3 +16,9 @@
 
 # IDEs
 .idea
+
+# Temp
+tmp
+
+# Docker Compose
+postgres-data

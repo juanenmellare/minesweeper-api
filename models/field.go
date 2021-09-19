@@ -2,13 +2,19 @@ package models
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	"strconv"
 )
 
 var mineString = "MINE"
 
 type Field struct {
-	Value *string `json:"value"`
+	ID        uuid.UUID `json:"-" gorm:"type:uuid;default:uuid_generate_v4()"`
+	Value     *string   `json:"value"`
+	PositionY int       `json:"positionY"`
+	PositionX int       `json:"positionX"`
+	GameId    uuid.UUID `json:"-"`
+	Game      Game      `json:"-" gorm:"foreignKey:GameId;references:id"`
 }
 
 func (f *Field) setValue(value string) {
@@ -31,4 +37,8 @@ func (f *Field) SetMine() {
 
 func (f *Field) IsMine() bool {
 	return *f.Value == mineString
+}
+
+func (f *Field) IsNil() bool {
+	return f.Value == nil
 }

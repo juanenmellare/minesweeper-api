@@ -11,9 +11,8 @@ func Test_createMinefield(t *testing.T) {
 
 	minefield := *createMinefield(settingsMock)
 
-	assert.Equal(t, settingsMock.Height, len(minefield))
-	assert.Equal(t, settingsMock.Width, len(minefield[0]))
-	assert.Equal(t, Field{Value: (*string)(nil)}, minefield[0][0])
+	assert.Equal(t, settingsMock.Width*settingsMock.Height, len(minefield))
+	assert.Equal(t, Field{Value: (*string)(nil)}, minefield[0])
 }
 
 func TestNewGame(t *testing.T) {
@@ -25,8 +24,7 @@ func TestNewGame(t *testing.T) {
 	assert.Nil(t, err)
 	assert.WithinDuration(t, time.Now(), game.StartedAt, 1*time.Second)
 	assert.Equal(t, settingsMock, &game.Settings)
-	assert.Equal(t, settingsMock.Height, len(minefield))
-	assert.Equal(t, settingsMock.Width, len(minefield[0]))
+	assert.Equal(t, settingsMock.Height*settingsMock.Width, len(minefield))
 }
 
 func TestNewGame_err(t *testing.T) {
@@ -52,6 +50,7 @@ func Test_fillMinefieldWithMines(t *testing.T) {
 
 func Test_fillMinefieldWithHints(t *testing.T) {
 	settingsMock := &Settings{Height: 3, Width: 2, MinesQuantity: 2}
+
 	minefield := make([][]Field, settingsMock.Height)
 	for index := range minefield {
 		minefield[index] = make([]Field, settingsMock.Width)

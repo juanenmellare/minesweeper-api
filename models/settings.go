@@ -1,19 +1,22 @@
 package models
 
 import (
+	"github.com/google/uuid"
 	"minesweeper-api/errors"
 	"strconv"
 )
 
 type Settings struct {
-	Width         int `json:"width"`
-	Height        int `json:"height"`
-	MinesQuantity int `json:"minesQuantity"`
+	ID            uuid.UUID `json:"-" gorm:"type:uuid;default:uuid_generate_v4()"`
+	Width         int       `json:"width"`
+	Height        int       `json:"height"`
+	MinesQuantity int       `json:"minesQuantity"`
 }
 
 func buildSettingsMinError(fieldName string, minValue int) *errors.ApiError {
 	err := errors.NewError("minefield " + fieldName + " must not be less than " + strconv.Itoa(minValue))
 	return errors.NewBadRequestApiError(err)
+
 }
 
 func (s Settings) Validate() *errors.ApiError {
