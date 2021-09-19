@@ -29,9 +29,9 @@ func TestSettings_Validate_height(t *testing.T) {
 	assert.Equal(t, "minefield height must not be less than 3", apiErr.Message)
 }
 
-func TestSettings_Validate_bombs_quantity(t *testing.T) {
-	apiErr := Settings{Width: 99, Height: 99, BombsQuantity: 0}.Validate()
+func TestSettings_Validate_mines_quantity(t *testing.T) {
+	apiErr := Settings{Width: 99, Height: 99, MinesQuantity: 0}.Validate()
 
 	assert.NotNil(t, apiErr)
-	assert.Equal(t, "minefield bombs quantity must not be less than 1", apiErr.Message)
+	assert.Equal(t, "minefield mines quantity must not be less than 1", apiErr.Message)
 }

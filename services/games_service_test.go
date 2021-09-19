@@ -16,7 +16,7 @@ func TestNewGamesService(t *testing.T) {
 func Test_gamesServiceImpl_Create(t *testing.T) {
 	gameService := NewGamesService()
 
-	settings := &models.Settings{Width: 3, Height: 3, BombsQuantity: 1}
+	settings := &models.Settings{Width: 3, Height: 3, MinesQuantity: 1}
 
 	game, err := gameService.Create(settings)
 
@@ -24,7 +24,8 @@ func Test_gamesServiceImpl_Create(t *testing.T) {
 
 	assert.WithinDuration(t, gameExpected.StartedAt, game.StartedAt, 1*time.Second)
 	assert.Equal(t, gameExpected.Status, game.Status)
-	assert.Equal(t, gameExpected.Minefield, game.Minefield)
+	assert.Equal(t, settings.Height, len(*game.Minefield))
+	assert.Equal(t, settings.Height, len((*game.Minefield)[0]))
 	assert.Equal(t, gameExpected.Settings, game.Settings)
 	assert.Nil(t, err)
 }
@@ -32,7 +33,7 @@ func Test_gamesServiceImpl_Create(t *testing.T) {
 func Test_gamesServiceImpl_Create_new_game_err(t *testing.T) {
 	gameService := NewGamesService()
 
-	settings := &models.Settings{Width: 0, Height: 3, BombsQuantity: 1}
+	settings := &models.Settings{Width: 0, Height: 3, MinesQuantity: 1}
 
 	game, err := gameService.Create(settings)
 
