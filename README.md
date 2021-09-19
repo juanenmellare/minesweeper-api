@@ -5,17 +5,12 @@
 Golang 1.16
 
 
-### Run test
+### Run linter and tests
 ```bash
-go test ./...
-```
-
-### Run Linter
-```bash
-gofmt -s -w .
+make format-and-tests
 ```
 
 ### Run API
 ```bash
-go run . 
+make run
 ```

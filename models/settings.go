@@ -1,21 +1,22 @@
 package models
 
 import (
-	"errors"
+	"minesweeper-api/errors"
 	"strconv"
 )
 
 type Settings struct {
-	Width         int
-	Height        int
-	BombsQuantity int
+	Width         int `json:"width"`
+	Height        int `json:"height"`
+	BombsQuantity int `json:"bombsQuantity"`
 }
 
-func buildSettingsMinError(fieldName string, minValue int) error {
-	return errors.New("minefield " + fieldName + " must not be less than " + strconv.Itoa(minValue))
+func buildSettingsMinError(fieldName string, minValue int) *errors.ApiError {
+	err := errors.NewError("minefield " + fieldName + " must not be less than " + strconv.Itoa(minValue))
+	return errors.NewBadRequestApiError(err)
 }
 
-func (s Settings) Validate() error {
+func (s Settings) Validate() *errors.ApiError {
 	const minWidth int = 3
 	const minHeight int = 3
 	const minBombsQuantity int = 1

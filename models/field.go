@@ -1,5 +1,5 @@
 package models
 
 type Field struct {
-	value *int
+	Value *int `json:"value"`
 }
