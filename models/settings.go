@@ -8,7 +8,7 @@ import (
 type Settings struct {
 	Width         int `json:"width"`
 	Height        int `json:"height"`
-	BombsQuantity int `json:"bombsQuantity"`
+	MinesQuantity int `json:"minesQuantity"`
 }
 
 func buildSettingsMinError(fieldName string, minValue int) *errors.ApiError {
@@ -19,7 +19,7 @@ func buildSettingsMinError(fieldName string, minValue int) *errors.ApiError {
 func (s Settings) Validate() *errors.ApiError {
 	const minWidth int = 3
 	const minHeight int = 3
-	const minBombsQuantity int = 1
+	const minMinesQuantity int = 1
 
 	if minWidth > s.Width {
 		return buildSettingsMinError("width", minHeight)
@@ -27,8 +27,8 @@ func (s Settings) Validate() *errors.ApiError {
 	if minHeight > s.Height {
 		return buildSettingsMinError("height", minHeight)
 	}
-	if minBombsQuantity > s.BombsQuantity {
-		return buildSettingsMinError("bombs quantity", minBombsQuantity)
+	if minMinesQuantity > s.MinesQuantity {
+		return buildSettingsMinError("mines quantity", minMinesQuantity)
 	}
 
 	return nil

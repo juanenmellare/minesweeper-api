@@ -33,7 +33,7 @@ func Test_gamesControllerImpl_Create(t *testing.T) {
 	alertsController.Create(c)
 
 	expectedJsonString := "{\"startedAt\":\"0001-01-01T00:00:00Z\",\"settings\":{\"width\":0,\"height\":0," +
-		"\"bombsQuantity\":0},\"minefield\":null,\"status\":\"\"}"
+		"\"minesQuantity\":0},\"minefield\":null,\"status\":\"\"}"
 
 	assert.Equal(t, http.StatusCreated, w.Code)
 	assert.Equal(t, expectedJsonString, w.Body.String())
