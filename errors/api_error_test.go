@@ -38,3 +38,11 @@ func TestNewBadRequestApiError(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, apiError.StatusCode)
 	assert.Equal(t, err.Error(), apiError.Message)
 }
+
+func TestNewError(t *testing.T) {
+	message := "panic"
+	err := NewError(message)
+
+	assert.NotNil(t, err)
+	assert.Equal(t, message, err.Error())
+}

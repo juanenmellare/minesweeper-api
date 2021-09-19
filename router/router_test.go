@@ -3,6 +3,7 @@ package router
 import (
 	"bytes"
 	"fmt"
+	"minesweeper-api/factories"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,7 +12,8 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	engine := New()
+	DomainLayersFactory := factories.NewDomainLayersFactory()
+	engine := New(DomainLayersFactory)
 	s := httptest.NewServer(engine)
 
 	response, _ := http.Get(fmt.Sprintf("%s/ping", s.URL))
