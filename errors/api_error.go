@@ -6,9 +6,9 @@ import (
 )
 
 type ApiError struct {
-	Message    string
-	Status     string
-	StatusCode int
+	Message    string `json:"message"`
+	Status     string `json:"status"`
+	StatusCode int    `json:"status_code"`
 }
 
 func NewError(message string) error {

@@ -6,41 +6,36 @@ import (
 )
 
 type DomainLayersFactory interface {
-	createHealthChecksController()
 	GetHealthChecksController() controllers.HealthChecksController
-	createGamesController()
 	GetGamesController() controllers.GamesController
 }
 
 type domainLayersFactoryImpl struct {
 	healthChecksController controllers.HealthChecksController
-	gamesController controllers.GamesController
+	gamesController        controllers.GamesController
 }
 
 func NewDomainLayersFactory() DomainLayersFactory {
-	domainLayersFactory := &domainLayersFactoryImpl{}
-
-	domainLayersFactory.createHealthChecksController()
-	domainLayersFactory.createGamesController()
-
-	return domainLayersFactory
+	return &domainLayersFactoryImpl{
+		healthChecksController: createHealthChecksController(),
+		gamesController: createGamesController(),
+	}
 }
 
-func (d *domainLayersFactoryImpl) createHealthChecksController() {
-	healthChecksController := controllers.NewHealthChecksController()
-
-	d.healthChecksController = healthChecksController
+func createHealthChecksController() controllers.HealthChecksController {
+	return controllers.NewHealthChecksController()
 }
 
-func (d domainLayersFactoryImpl) GetHealthChecksController() controllers.HealthChecksController {
-	return d.healthChecksController
-}
-
-func (d *domainLayersFactoryImpl) createGamesController() {
+func createGamesController() controllers.GamesController {
 	gamesService := services.NewGamesService()
 	gamesController := controllers.NewGamesController(gamesService)
 
-	d.gamesController = gamesController
+	return gamesController
+}
+
+
+func (d domainLayersFactoryImpl) GetHealthChecksController() controllers.HealthChecksController {
+	return d.healthChecksController
 }
 
 func (d domainLayersFactoryImpl) GetGamesController() controllers.GamesController {

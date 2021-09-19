@@ -12,7 +12,7 @@ type GamesController interface {
 	Create(context *gin.Context)
 }
 
-type gamesControllerImpl struct{
+type gamesControllerImpl struct {
 	gamesService services.GamesService
 }
 

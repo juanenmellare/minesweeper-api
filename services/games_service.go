@@ -5,7 +5,6 @@ import (
 	"minesweeper-api/models"
 )
 
-//go:generate mockery --name GamesService --output servicesMocks
 type GamesService interface {
 	Create(settings *models.Settings) (*models.Game, *errors.ApiError)
 }

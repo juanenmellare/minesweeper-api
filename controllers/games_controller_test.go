@@ -6,8 +6,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
+	"minesweeper-api/errors"
 	"minesweeper-api/models"
-	"minesweeper-api/services/servicesMocks"
+	"minesweeper-api/services/mocks"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -38,7 +39,7 @@ func Test_gamesControllerImpl_Create(t *testing.T) {
 	assert.Equal(t, expectedJsonString, w.Body.String())
 }
 
-func Test_gamesControllerImpl_Create_err(t *testing.T) {
+func Test_gamesControllerImpl_Create_bind_err(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 
@@ -50,8 +51,33 @@ func Test_gamesControllerImpl_Create_err(t *testing.T) {
 
 	alertsController.Create(c)
 
-	expectedJsonString := "{\"Message\":\"invalid request\",\"Status\":\"bad request\",\"StatusCode\":400}"
+	expectedJsonString := "{\"message\":\"invalid request\",\"status\":\"bad request\",\"statusCode\":400}"
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	assert.Equal(t, expectedJsonString, expectedJsonString)
+}
+
+func Test_gamesControllerImpl_Create_gameService_create_err(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	settings := models.Settings{}
+	requestByte, _ := json.Marshal(settings)
+	requestReader := bytes.NewReader(requestByte)
+	requestBody := ioutil.NopCloser(requestReader)
+
+	c.Request = &http.Request{Body: requestBody}
+
+	gamesServiceMock := new(mocks.GamesService)
+	err := errors.NewBadRequestApiError(errors.NewError("bad_request"))
+	gamesServiceMock.On("Create", &settings).Return(nil, err)
+
+	alertsController := NewGamesController(gamesServiceMock)
+
+	alertsController.Create(c)
+
+	expectedJsonString := "{\"message\":\"bad_request\",\"status\":\"bad request\",\"status_code\":400}"
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, expectedJsonString, w.Body.String())
 }

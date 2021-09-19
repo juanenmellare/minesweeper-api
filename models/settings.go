@@ -8,7 +8,7 @@ import (
 type Settings struct {
 	Width         int `json:"width"`
 	Height        int `json:"height"`
-	BombsQuantity int	`json:"bombsQuantity"`
+	BombsQuantity int `json:"bombsQuantity"`
 }
 
 func buildSettingsMinError(fieldName string, minValue int) *errors.ApiError {

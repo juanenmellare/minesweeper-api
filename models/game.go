@@ -7,9 +7,9 @@ import (
 
 type Game struct {
 	StartedAt time.Time `json:"startedAt"`
-	Settings  Settings `json:"settings"`
+	Settings  Settings  `json:"settings"`
 	Minefield [][]Field `json:"minefield"`
-	Status    Status `json:"status"`
+	Status    Status    `json:"status"`
 }
 
 func createMinefield(settings *Settings) [][]Field {
