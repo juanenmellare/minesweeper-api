@@ -1,11 +1,18 @@
 package errors
 
-import "net/http"
+import (
+	"errors"
+	"net/http"
+)
 
 type ApiError struct {
 	Message    string
 	Status     string
 	StatusCode int
+}
+
+func NewError(message string) error {
+	return errors.New(message)
 }
 
 func newApiError(status string, statusCode int, err error) *ApiError {

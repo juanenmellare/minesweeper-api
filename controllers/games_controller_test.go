@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"minesweeper-api/models"
+	"minesweeper-api/services/servicesMocks"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,20 +17,22 @@ func Test_gamesControllerImpl_Create(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 
-	header := map[string][]string{}
-
-	bodyRequest := models.Settings{}
-	requestByte, _ := json.Marshal(bodyRequest)
+	settings := models.Settings{}
+	requestByte, _ := json.Marshal(settings)
 	requestReader := bytes.NewReader(requestByte)
-	request := ioutil.NopCloser(requestReader)
+	requestBody := ioutil.NopCloser(requestReader)
 
-	c.Request = &http.Request{Body: request, Header: header}
+	c.Request = &http.Request{Body: requestBody}
 
-	alertsController := NewGamesController()
+	gamesServiceMock := new(mocks.GamesService)
+	gamesServiceMock.On("Create", &settings).Return(&models.Game{}, nil)
+
+	alertsController := NewGamesController(gamesServiceMock)
+
 	alertsController.Create(c)
 
-	expectedJsonString := "{\"StartedAt\":\"0001-01-01T00:00:00Z\",\"Settings\":{\"Width\":0,\"Height\":0," +
-		"\"BombsQuantity\":0},\"Minefield\":null,\"Status\":\"\"}"
+	expectedJsonString := "{\"startedAt\":\"0001-01-01T00:00:00Z\",\"settings\":{\"width\":0,\"height\":0," +
+		"\"bombsQuantity\":0},\"minefield\":null,\"status\":\"\"}"
 
 	assert.Equal(t, http.StatusCreated, w.Code)
 	assert.Equal(t, expectedJsonString, w.Body.String())
@@ -39,10 +42,12 @@ func Test_gamesControllerImpl_Create_err(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 
-	header := map[string][]string{}
-	c.Request = &http.Request{Body: nil, Header: header}
+	c.Request = &http.Request{Body: nil}
 
-	alertsController := NewGamesController()
+	gamesServiceMock := new(mocks.GamesService)
+
+	alertsController := NewGamesController(gamesServiceMock)
+
 	alertsController.Create(c)
 
 	expectedJsonString := "{\"Message\":\"invalid request\",\"Status\":\"bad request\",\"StatusCode\":400}"
