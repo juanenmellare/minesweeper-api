@@ -42,3 +42,8 @@ func (f *Field) IsMine() bool {
 func (f *Field) IsNil() bool {
 	return f.Value == nil
 }
+
+func (f *Field) SetPosition(y, x int) {
+	f.PositionY = y
+	f.PositionX = x
+}

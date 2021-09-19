@@ -24,7 +24,10 @@ func Test_gamesServiceImpl_Create(t *testing.T) {
 	gamesRepositoryMock.On("Create", mock.AnythingOfType("*models.Game")).Return(nil)
 
 	settings := &models.Settings{Width: 3, Height: 3, MinesQuantity: 1}
-	gameExpected, _ := models.NewGame(settings)
+	minefield := make([]models.Field, settings.Height*settings.Width)
+	gameExpected := &models.Game{
+		StartedAt: time.Now(), Settings: *settings, Minefield: &minefield, Status: models.StatusInProgress,
+	}
 
 	gameService := NewGamesService(gamesRepositoryMock)
 
@@ -32,7 +35,7 @@ func Test_gamesServiceImpl_Create(t *testing.T) {
 
 	assert.WithinDuration(t, gameExpected.StartedAt, game.StartedAt, 1*time.Second)
 	assert.Equal(t, gameExpected.Status, game.Status)
-	assert.Equal(t, settings.Height*settings.Width, len(game.Minefield))
+	assert.Equal(t, len(minefield), len(*game.Minefield))
 	assert.Equal(t, gameExpected.Settings, game.Settings)
 	assert.Nil(t, err)
 }
@@ -66,4 +69,64 @@ func Test_gamesServiceImpl_Create_repository_create_err(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Equal(t, errExpected.StatusCode, err.StatusCode)
 	assert.Equal(t, errExpected.Message, err.Message)
+}
+
+func Test_fillMinefieldWithMines(t *testing.T) {
+	settingsMock := &models.Settings{Height: 3, Width: 3, MinesQuantity: 3}
+	minefield := make([][]models.Field, settingsMock.Height)
+	for index := range minefield {
+		minefield[index] = make([]models.Field, settingsMock.Width)
+	}
+
+	minesPositions := fillMinefieldWithMines(&minefield, settingsMock)
+
+	assert.Equal(t, settingsMock.MinesQuantity, len(minesPositions))
+}
+
+func Test_fillMinefieldWithHints(t *testing.T) {
+	settingsMock := &models.Settings{Height: 3, Width: 2, MinesQuantity: 2}
+
+	minefield := make([][]models.Field, settingsMock.Height)
+	for index := range minefield {
+		minefield[index] = make([]models.Field, settingsMock.Width)
+	}
+
+	positionOne := models.Position{Y: 0, X: 1}
+	positionTwo := models.Position{Y: 0, X: 0}
+
+	minefield[positionOne.Y][positionOne.X].SetMine()
+	minefield[positionTwo.Y][positionTwo.X].SetMine()
+
+	fillMinefieldWithHints(&minefield, settingsMock, []models.Position{positionOne, positionTwo})
+
+	assert.True(t, minefield[positionOne.Y][positionOne.X].IsMine())
+	assert.True(t, minefield[positionTwo.Y][positionTwo.X].IsMine())
+	assert.Equal(t, "2", *minefield[1][0].Value)
+	assert.Equal(t, "2", *minefield[1][1].Value)
+	assert.Nil(t, minefield[2][0].Value)
+	assert.Nil(t, minefield[2][1].Value)
+}
+
+func Test_fillFieldsPositionsAndFlat(t *testing.T) {
+	settingsMock := &models.Settings{Height: 3, Width: 2, MinesQuantity: 2}
+
+	minefield := make([][]models.Field, settingsMock.Height)
+	for index := range minefield {
+		minefield[index] = make([]models.Field, settingsMock.Width)
+	}
+
+	minefieldFlatted := *fillFieldsPositionsAndFlat(settingsMock, &minefield)
+
+	assert.Equal(t, 0, minefieldFlatted[0].PositionY)
+	assert.Equal(t, 0, minefieldFlatted[0].PositionX)
+	assert.Equal(t, 0, minefieldFlatted[1].PositionY)
+	assert.Equal(t, 1, minefieldFlatted[1].PositionX)
+	assert.Equal(t, 1, minefieldFlatted[2].PositionY)
+	assert.Equal(t, 0, minefieldFlatted[2].PositionX)
+	assert.Equal(t, 1, minefieldFlatted[3].PositionY)
+	assert.Equal(t, 1, minefieldFlatted[3].PositionX)
+	assert.Equal(t, 2, minefieldFlatted[4].PositionY)
+	assert.Equal(t, 0, minefieldFlatted[4].PositionX)
+	assert.Equal(t, 2, minefieldFlatted[5].PositionY)
+	assert.Equal(t, 1, minefieldFlatted[5].PositionX)
 }

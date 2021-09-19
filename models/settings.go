@@ -16,7 +16,6 @@ type Settings struct {
 func buildSettingsMinError(fieldName string, minValue int) *errors.ApiError {
 	err := errors.NewError("minefield " + fieldName + " must not be less than " + strconv.Itoa(minValue))
 	return errors.NewBadRequestApiError(err)
-
 }
 
 func (s Settings) Validate() *errors.ApiError {
