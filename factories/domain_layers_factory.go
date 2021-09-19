@@ -18,7 +18,7 @@ type domainLayersFactoryImpl struct {
 func NewDomainLayersFactory() DomainLayersFactory {
 	return &domainLayersFactoryImpl{
 		healthChecksController: createHealthChecksController(),
-		gamesController: createGamesController(),
+		gamesController:        createGamesController(),
 	}
 }
 
@@ -32,7 +32,6 @@ func createGamesController() controllers.GamesController {
 
 	return gamesController
 }
-
 
 func (d domainLayersFactoryImpl) GetHealthChecksController() controllers.HealthChecksController {
 	return d.healthChecksController
