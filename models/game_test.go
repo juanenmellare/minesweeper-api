@@ -38,23 +38,37 @@ func TestNewGame_err(t *testing.T) {
 	assert.NotNil(t, err)
 }
 
-func Test_fillMinefieldWithBombs(t *testing.T) {
-	settingsMock := &Settings{Height: 3, Width: 3, MinesQuantity: 1}
+func Test_fillMinefieldWithMines(t *testing.T) {
+	settingsMock := &Settings{Height: 3, Width: 3, MinesQuantity: 3}
 	minefield := make([][]Field, settingsMock.Height)
 	for index := range minefield {
 		minefield[index] = make([]Field, settingsMock.Width)
 	}
 
-	fillMinefieldWithMines(&minefield, settingsMock)
+	minesPositions := fillMinefieldWithMines(&minefield, settingsMock)
 
-	minesCounter := 0
-	for _, fieldLine := range minefield {
-		for _, field := range fieldLine {
-			if field.Value != nil && *field.Value == "MINE" {
-				minesCounter++
-			}
-		}
+	assert.Equal(t, settingsMock.MinesQuantity, len(minesPositions))
+}
+
+func Test_fillMinefieldWithHints(t *testing.T) {
+	settingsMock := &Settings{Height: 3, Width: 2, MinesQuantity: 2}
+	minefield := make([][]Field, settingsMock.Height)
+	for index := range minefield {
+		minefield[index] = make([]Field, settingsMock.Width)
 	}
 
-	assert.Equal(t, settingsMock.MinesQuantity, minesCounter)
+	positionOne := Position{Y: 0, X: 1}
+	positionTwo := Position{Y: 0, X: 0}
+
+	minefield[positionOne.Y][positionOne.X].SetMine()
+	minefield[positionTwo.Y][positionTwo.X].SetMine()
+
+	fillMinefieldWithHints(&minefield, settingsMock, []Position{positionOne, positionTwo})
+
+	assert.True(t, minefield[positionOne.Y][positionOne.X].IsMine())
+	assert.True(t, minefield[positionTwo.Y][positionTwo.X].IsMine())
+	assert.Equal(t, "2", *minefield[1][0].Value)
+	assert.Equal(t, "2", *minefield[1][1].Value)
+	assert.Nil(t, minefield[2][0].Value)
+	assert.Nil(t, minefield[2][1].Value)
 }
