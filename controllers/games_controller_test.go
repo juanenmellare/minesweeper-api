@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"minesweeper-api/errors"
@@ -28,9 +29,9 @@ func Test_gamesControllerImpl_Create(t *testing.T) {
 	gamesServiceMock := new(mocks.GamesService)
 	gamesServiceMock.On("Create", &settings).Return(&models.Game{}, nil)
 
-	alertsController := NewGamesController(gamesServiceMock)
+	gamesController := NewGamesController(gamesServiceMock)
 
-	alertsController.Create(c)
+	gamesController.Create(c)
 
 	expectedJsonString := "{\"id\":\"00000000-0000-0000-0000-000000000000\",\"startedAt\":\"0001-01-01T00:00:00Z\"," +
 		"\"settings\":{\"width\":0,\"height\":0,\"minesQuantity\":0},\"minefield\":null,\"status\":\"\"}"
@@ -47,9 +48,9 @@ func Test_gamesControllerImpl_Create_bind_err(t *testing.T) {
 
 	gamesServiceMock := new(mocks.GamesService)
 
-	alertsController := NewGamesController(gamesServiceMock)
+	gamesController := NewGamesController(gamesServiceMock)
 
-	alertsController.Create(c)
+	gamesController.Create(c)
 
 	expectedJsonString := "{\"message\":\"invalid request\",\"status\":\"bad request\",\"statusCode\":400}"
 
@@ -72,12 +73,54 @@ func Test_gamesControllerImpl_Create_gameService_create_err(t *testing.T) {
 	err := errors.NewBadRequestApiError(errors.NewError("bad_request"))
 	gamesServiceMock.On("Create", &settings).Return(nil, err)
 
-	alertsController := NewGamesController(gamesServiceMock)
+	gamesController := NewGamesController(gamesServiceMock)
 
-	alertsController.Create(c)
+	gamesController.Create(c)
 
 	expectedJsonString := "{\"message\":\"bad_request\",\"status\":\"bad request\",\"status_code\":400}"
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, expectedJsonString, w.Body.String())
+}
+
+func Test_gamesControllerImpl_FindById(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	uuidParam := uuid.New()
+	c.Params = append(c.Params, gin.Param{Key: "uuid", Value: uuidParam.String()})
+
+	gamesServiceMock := new(mocks.GamesService)
+	gamesServiceMock.On("FindById", &uuidParam, true).Return(&models.Game{}, nil)
+
+	gamesController := NewGamesController(gamesServiceMock)
+
+	gamesController.FindById(c)
+
+	expectedJsonString := "{\"id\":\"00000000-0000-0000-0000-000000000000\",\"startedAt\":\"0001-01-01T00:00:00Z\"," +
+		"\"settings\":{\"width\":0,\"height\":0,\"minesQuantity\":0},\"minefield\":null,\"status\":\"\"}"
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, expectedJsonString, w.Body.String())
+}
+
+func Test_gamesControllerImpl_FindById_err(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	uuidParam := uuid.New()
+	c.Params = append(c.Params, gin.Param{Key: "uuid", Value: uuidParam.String()})
+
+	gamesServiceMock := new(mocks.GamesService)
+	err := errors.NewNotFoundError(errors.NewError("not_found"))
+	gamesServiceMock.On("FindById", &uuidParam, true).Return(nil, err)
+
+	gamesController := NewGamesController(gamesServiceMock)
+
+	gamesController.FindById(c)
+
+	expectedJsonString := "{\"message\":\"not_found\",\"status\":\"not found\",\"status_code\":404}"
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
 	assert.Equal(t, expectedJsonString, w.Body.String())
 }

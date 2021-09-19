@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"minesweeper-api/errors"
 	"minesweeper-api/models"
 	"minesweeper-api/services"
@@ -10,6 +11,7 @@ import (
 
 type GamesController interface {
 	Create(context *gin.Context)
+	FindById(context *gin.Context)
 }
 
 type gamesControllerImpl struct {
@@ -37,4 +39,16 @@ func (g gamesControllerImpl) Create(context *gin.Context) {
 	}
 
 	context.JSON(http.StatusCreated, game)
+}
+
+func (g gamesControllerImpl) FindById(context *gin.Context) {
+	uuidParam := uuid.MustParse(context.Param("uuid"))
+
+	game, err := g.gamesService.FindById(&uuidParam, true)
+	if err != nil {
+		context.JSON(err.StatusCode, err)
+		return
+	}
+
+	context.JSON(http.StatusOK, game)
 }

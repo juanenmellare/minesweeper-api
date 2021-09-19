@@ -1,6 +1,7 @@
 package services
 
 import (
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"minesweeper-api/errors"
@@ -136,4 +137,33 @@ func Test_fillFieldsPositionsAndFlat(t *testing.T) {
 	assert.Equal(t, 1, minefieldFlatted[5].PositionX)
 	assert.Equal(t, models.FieldStatusHidden, minefieldFlatted[5].Status)
 
+}
+
+func Test_gamesServiceImpl_FindById(t *testing.T) {
+	gamesRepositoryMock := new(mocks.GamesRepository)
+	gameExpected := &models.Game{}
+
+	uuidParam := uuid.New()
+	gamesRepositoryMock.On("FindById", &uuidParam, true).Return(gameExpected, nil)
+
+	gameService := NewGamesService(gamesRepositoryMock)
+
+	game, err := gameService.FindById(&uuidParam, true)
+
+	assert.Equal(t, gameExpected, game)
+	assert.Nil(t, err)
+}
+
+func Test_gamesServiceImpl_FindById_err(t *testing.T) {
+	gamesRepositoryMock := new(mocks.GamesRepository)
+	errExpected := errors.NewInternalServerApiError(errors.NewError("panic"))
+	uuidParam := uuid.New()
+	gamesRepositoryMock.On("FindById", &uuidParam, true).Return(nil, errExpected)
+
+	gameService := NewGamesService(gamesRepositoryMock)
+
+	game, err := gameService.FindById(&uuidParam, true)
+
+	assert.Equal(t, errExpected.Status, err.Status)
+	assert.Nil(t, game)
 }

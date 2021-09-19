@@ -30,3 +30,7 @@ func NewInternalServerApiError(err error) *ApiError {
 func NewBadRequestApiError(err error) *ApiError {
 	return newApiError("bad request", http.StatusBadRequest, err)
 }
+
+func NewNotFoundError(err error) *ApiError {
+	return newApiError("not found", http.StatusNotFound, err)
+}

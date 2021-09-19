@@ -1,6 +1,7 @@
 package services
 
 import (
+	"github.com/google/uuid"
 	"math/rand"
 	"minesweeper-api/errors"
 	"minesweeper-api/models"
@@ -10,6 +11,7 @@ import (
 
 type GamesService interface {
 	Create(settings *models.Settings) (*models.Game, *errors.ApiError)
+	FindById(uuid *uuid.UUID, hasToPreload bool) (*models.Game, *errors.ApiError)
 }
 
 type gamesServiceImpl struct {
@@ -109,6 +111,15 @@ func (g gamesServiceImpl) Create(settings *models.Settings) (*models.Game, *erro
 	}
 
 	if err := g.gamesRepository.Create(game); err != nil {
+		return nil, err
+	}
+
+	return game, nil
+}
+
+func (g gamesServiceImpl) FindById(uuid *uuid.UUID, hasToPreload bool) (*models.Game, *errors.ApiError) {
+	game, err := g.gamesRepository.FindById(uuid, hasToPreload)
+	if err != nil {
 		return nil, err
 	}
 

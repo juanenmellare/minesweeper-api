@@ -14,6 +14,8 @@ func New(domainLayers factories.DomainLayersFactory) *gin.Engine {
 	v1Group := router.Group("/v1")
 	{
 		v1Group.POST("/games", gamesController.Create)
+		v1Group.GET("/games/:uuid", gamesController.FindById)
+
 	}
 
 	return router

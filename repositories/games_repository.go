@@ -1,14 +1,15 @@
 package repositories
 
 import (
+	"github.com/google/uuid"
 	"minesweeper-api/databases"
 	"minesweeper-api/errors"
 	"minesweeper-api/models"
 )
 
-//go:generate mockery --name GamesRepository --output mocks
 type GamesRepository interface {
 	Create(game *models.Game) *errors.ApiError
+	FindById(uuid *uuid.UUID, hasToPreload bool) (*models.Game, *errors.ApiError)
 }
 
 type gamesRepositoryImpl struct {
@@ -28,4 +29,21 @@ func (g gamesRepositoryImpl) Create(game *models.Game) *errors.ApiError {
 	}
 
 	return nil
+}
+
+func (g gamesRepositoryImpl) FindById(id *uuid.UUID, hasToPreload bool) (*models.Game, *errors.ApiError) {
+	var game models.Game
+	game.ID = *id
+
+	database := g.database.Get()
+	if hasToPreload {
+		database.Preload("Settings").Preload("Minefield")
+	}
+
+	tx := database.Find(&game).Last(&game)
+	if err := tx.Error; err != nil {
+		return nil, errors.NewInternalServerApiError(err)
+	}
+
+	return &game, nil
 }
