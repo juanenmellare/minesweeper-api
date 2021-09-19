@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-func TestStatus(t *testing.T) {
-	assert.Equal(t, "IN_PROGRESS", string(StatusInProgress))
-	assert.Equal(t, "WON", string(StatusWon))
-	assert.Equal(t, "LOST", string(StatusLost))
+func TestGameStatus(t *testing.T) {
+	assert.Equal(t, "IN_PROGRESS", string(GameStatusInProgress))
+	assert.Equal(t, "WON", string(GameStatusWon))
+	assert.Equal(t, "LOST", string(GameStatusLost))
 }

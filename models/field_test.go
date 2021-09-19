@@ -75,3 +75,11 @@ func TestField_SetPosition(t *testing.T) {
 	assert.Equal(t, y, field.PositionY)
 	assert.Equal(t, x, field.PositionX)
 }
+
+func TestField_SetInitialValue(t *testing.T) {
+	field := Field{}
+
+	field.SetInitialValue()
+
+	assert.Equal(t, FieldStatusHidden, field.Status)
+}

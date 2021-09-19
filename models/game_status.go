@@ -3,7 +3,7 @@ package models
 type GameStatus string
 
 const (
-	StatusInProgress GameStatus = "IN_PROGRESS"
-	StatusWon        GameStatus = "WON"
-	StatusLost       GameStatus = "LOST"
+	GameStatusInProgress GameStatus = "IN_PROGRESS"
+	GameStatusWon        GameStatus = "WON"
+	GameStatusLost       GameStatus = "LOST"
 )

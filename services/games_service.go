@@ -75,6 +75,7 @@ func fillFieldsPositionsAndFlat(settings *models.Settings, minefield *[][]models
 	for y := 0; y < settings.Height; y++ {
 		for x := 0; x < settings.Width; x++ {
 			field := &(*minefield)[y][x]
+			field.SetInitialValue()
 			field.SetPosition(y, x)
 			minefieldSlice[index] = *field
 			index++
@@ -104,7 +105,7 @@ func (g gamesServiceImpl) Create(settings *models.Settings) (*models.Game, *erro
 
 	minefield := createMinefield(settings)
 	game := &models.Game{
-		StartedAt: time.Now(), Settings: *settings, Minefield: minefield, Status: models.StatusInProgress,
+		StartedAt: time.Now(), Settings: *settings, Minefield: minefield, Status: models.GameStatusInProgress,
 	}
 
 	if err := g.gamesRepository.Create(game); err != nil {

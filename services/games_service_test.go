@@ -26,7 +26,7 @@ func Test_gamesServiceImpl_Create(t *testing.T) {
 	settings := &models.Settings{Width: 3, Height: 3, MinesQuantity: 1}
 	minefield := make([]models.Field, settings.Height*settings.Width)
 	gameExpected := &models.Game{
-		StartedAt: time.Now(), Settings: *settings, Minefield: &minefield, Status: models.StatusInProgress,
+		StartedAt: time.Now(), Settings: *settings, Minefield: &minefield, Status: models.GameStatusInProgress,
 	}
 
 	gameService := NewGamesService(gamesRepositoryMock)
@@ -119,14 +119,21 @@ func Test_fillFieldsPositionsAndFlat(t *testing.T) {
 
 	assert.Equal(t, 0, minefieldFlatted[0].PositionY)
 	assert.Equal(t, 0, minefieldFlatted[0].PositionX)
+	assert.Equal(t, models.FieldStatusHidden, minefieldFlatted[0].Status)
 	assert.Equal(t, 0, minefieldFlatted[1].PositionY)
 	assert.Equal(t, 1, minefieldFlatted[1].PositionX)
+	assert.Equal(t, models.FieldStatusHidden, minefieldFlatted[1].Status)
 	assert.Equal(t, 1, minefieldFlatted[2].PositionY)
 	assert.Equal(t, 0, minefieldFlatted[2].PositionX)
+	assert.Equal(t, models.FieldStatusHidden, minefieldFlatted[2].Status)
 	assert.Equal(t, 1, minefieldFlatted[3].PositionY)
 	assert.Equal(t, 1, minefieldFlatted[3].PositionX)
+	assert.Equal(t, models.FieldStatusHidden, minefieldFlatted[3].Status)
 	assert.Equal(t, 2, minefieldFlatted[4].PositionY)
 	assert.Equal(t, 0, minefieldFlatted[4].PositionX)
+	assert.Equal(t, models.FieldStatusHidden, minefieldFlatted[4].Status)
 	assert.Equal(t, 2, minefieldFlatted[5].PositionY)
 	assert.Equal(t, 1, minefieldFlatted[5].PositionX)
+	assert.Equal(t, models.FieldStatusHidden, minefieldFlatted[5].Status)
+
 }

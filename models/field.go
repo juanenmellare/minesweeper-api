@@ -9,12 +9,13 @@ import (
 var mineString = "MINE"
 
 type Field struct {
-	ID        uuid.UUID `json:"-" gorm:"type:uuid;default:uuid_generate_v4()"`
-	Value     *string   `json:"value"`
-	PositionY int       `json:"positionY"`
-	PositionX int       `json:"positionX"`
-	GameId    uuid.UUID `json:"-"`
-	Game      Game      `json:"-" gorm:"foreignKey:GameId;references:id"`
+	ID        uuid.UUID   `json:"-" gorm:"type:uuid;default:uuid_generate_v4()"`
+	Value     *string     `json:"value"`
+	Status    FieldStatus `json:"status"`
+	PositionY int         `json:"positionY"`
+	PositionX int         `json:"positionX"`
+	GameId    uuid.UUID   `json:"-"`
+	Game      Game        `json:"-" gorm:"foreignKey:GameId;references:id"`
 }
 
 func (f *Field) setValue(value string) {
@@ -46,4 +47,8 @@ func (f *Field) IsNil() bool {
 func (f *Field) SetPosition(y, x int) {
 	f.PositionY = y
 	f.PositionX = x
+}
+
+func (f *Field) SetInitialValue() {
+	f.Status = FieldStatusHidden
 }
