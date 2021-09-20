@@ -16,7 +16,7 @@ func main() {
 	logger := log.Default()
 	config := configs.NewConfig()
 
-	connectionString := fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
+	connectionString := fmt.Sprintf("postgres://%v:%v@%v:%v/%v",
 		config.GetDatabaseUser(), config.GetDatabasePass(), config.GetDatabaseHost(),
 		config.GetDatabasePort(), config.GetDatabaseName())
 
