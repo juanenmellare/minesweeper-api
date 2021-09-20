@@ -7,7 +7,7 @@ import (
 )
 
 type Settings struct {
-	ID            uuid.UUID `json:"-" gorm:"type:uuid;default:uuid_generate_v4()"`
+	ID            uuid.UUID `json:"id" gorm:"type:uuid;default:uuid_generate_v4()"`
 	Width         int       `json:"width"`
 	Height        int       `json:"height"`
 	MinesQuantity int       `json:"minesQuantity"`

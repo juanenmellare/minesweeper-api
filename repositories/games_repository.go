@@ -37,9 +37,9 @@ func (g gamesRepositoryImpl) FindById(id *uuid.UUID, hasToPreload bool) (*models
 	var game models.Game
 	game.ID = *id
 
-	database := g.database.Get()
+	database := g.database.Get().Preload("Settings")
 	if hasToPreload {
-		database = database.Preload("Minefield").Preload("Settings")
+		database = database.Preload("Minefield")
 	}
 	tx := database.Find(&game).Last(&game)
 	baseMessage := "game with uuid " + id.String()

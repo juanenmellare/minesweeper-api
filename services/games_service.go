@@ -18,16 +18,13 @@ type GamesService interface {
 type gamesServiceImpl struct {
 	gamesRepository    repositories.GamesRepository
 	fieldsRepository   repositories.FieldsRepository
-	settingsRepository repositories.SettingsRepository
 }
 
 func NewGamesService(gamesRepository repositories.GamesRepository,
-	fieldsRepository repositories.FieldsRepository,
-	settingsRepository repositories.SettingsRepository) GamesService {
+	fieldsRepository repositories.FieldsRepository) GamesService {
 	return &gamesServiceImpl{
 		gamesRepository:    gamesRepository,
 		fieldsRepository:   fieldsRepository,
-		settingsRepository: settingsRepository,
 	}
 }
 
@@ -130,10 +127,14 @@ func (g gamesServiceImpl) FindById(uuid *uuid.UUID, hasToPreload bool) (*models.
 		return nil, err
 	}
 
+	if game.EndedAt == nil {
+		game.Duration = int(time.Now().Sub(game.StartedAt).Seconds())
+	}
+
 	return game, nil
 }
 
-func hasLost(field *models.Field, _ repositories.FieldsRepository, _ repositories.SettingsRepository) (
+func hasLost(field *models.Field, _ *models.Game, _ repositories.FieldsRepository) (
 	*models.GameStatus, *errors.ApiError) {
 	if field.IsMine() {
 		gameStatus := models.GameStatusLost
@@ -143,25 +144,14 @@ func hasLost(field *models.Field, _ repositories.FieldsRepository, _ repositorie
 	return nil, nil
 }
 
-func hasWon(field *models.Field, fieldsRepository repositories.FieldsRepository,
-	settingsRepository repositories.SettingsRepository) (*models.GameStatus, *errors.ApiError) {
-
+func hasWon(field *models.Field, game *models.Game,
+	fieldsRepository repositories.FieldsRepository) (*models.GameStatus, *errors.ApiError) {
 	flaggedMines, err := fieldsRepository.FindMineFieldsFlaggedByGame(&field.GameId)
 	if err != nil {
 		return nil, err
 	}
 
-	flaggedMinesQuantity := len(*flaggedMines)
-	if flaggedMinesQuantity == 0 {
-		return nil, err
-	}
-
-	settings, err := settingsRepository.FindByGameId(&field.GameId)
-	if err != nil {
-		return nil, err
-	}
-
-	if settings.MinesQuantity == flaggedMinesQuantity {
+	if game.Settings.MinesQuantity == len(*flaggedMines) {
 		gameStatus := models.GameStatusWon
 		return &gameStatus, nil
 	}
@@ -170,23 +160,19 @@ func hasWon(field *models.Field, fieldsRepository repositories.FieldsRepository,
 }
 
 var isGameFinishedStrategyMap = map[models.FieldStatus]func(
-	field *models.Field, fieldsRepository repositories.FieldsRepository,
-	settingsRepository repositories.SettingsRepository) (*models.GameStatus, *errors.ApiError){
+	field *models.Field, game *models.Game,
+	fieldsRepository repositories.FieldsRepository) (*models.GameStatus, *errors.ApiError){
 	models.FieldStatusShown:   hasLost,
 	models.FieldStatusFlagged: hasWon,
 }
 
-func (g gamesServiceImpl) validateIfIsFinished(fieldStatus models.FieldStatus, field *models.Field) *errors.ApiError {
+func (g gamesServiceImpl) validateIfIsFinished(fieldStatus models.FieldStatus, field *models.Field, game *models.Game) *errors.ApiError {
 	if hasGameFinished, ok := isGameFinishedStrategyMap[fieldStatus]; ok {
-		gameStatus, err := hasGameFinished(field, g.fieldsRepository, g.settingsRepository)
+		gameStatus, err := hasGameFinished(field, game, g.fieldsRepository)
 		if err != nil {
 			return err
 		}
 		if gameStatus != nil {
-			game, err := g.gamesRepository.FindById(&field.GameId, false)
-			if err != nil {
-				return err
-			}
 			game.Status = *gameStatus
 			now := time.Now()
 			game.EndedAt = &now
@@ -207,15 +193,24 @@ func (g gamesServiceImpl) ExecuteFieldAction(gameUuid *uuid.UUID, fieldUuid *uui
 		return err
 	}
 
+	game, err := g.gamesRepository.FindById(&field.GameId, false)
+	if err != nil {
+		return err
+	}
+
+	if game.Status != models.GameStatusInProgress {
+		return errors.NewBadRequestApiError(errors.NewError("game " + game.ID.String() + " is finished"))
+	}
+
 	if err := field.SetStatus(fieldStatus); err != nil {
 		return errors.NewBadRequestApiError(err)
 	}
 
-	if err = g.validateIfIsFinished(fieldStatus, field); err != nil {
+	if err = g.fieldsRepository.Update(field); err != nil {
 		return err
 	}
 
-	if err = g.fieldsRepository.Update(field); err != nil {
+	if err = g.validateIfIsFinished(fieldStatus, field, game); err != nil {
 		return err
 	}
 
