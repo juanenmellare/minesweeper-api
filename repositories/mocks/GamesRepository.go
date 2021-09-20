@@ -57,3 +57,19 @@ func (_m *GamesRepository) FindById(_a0 *uuid.UUID, hasToPreload bool) (*models.
 
 	return r0, r1
 }
+
+// Update provides a mock function with given fields: game
+func (_m *GamesRepository) Update(game *models.Game) *errors.ApiError {
+	ret := _m.Called(game)
+
+	var r0 *errors.ApiError
+	if rf, ok := ret.Get(0).(func(*models.Game) *errors.ApiError); ok {
+		r0 = rf(game)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*errors.ApiError)
+		}
+	}
+
+	return r0
+}

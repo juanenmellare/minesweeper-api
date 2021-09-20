@@ -28,7 +28,7 @@ func TestField_IsNil_false(t *testing.T) {
 }
 
 func TestField_IsMine(t *testing.T) {
-	field := Field{Value: &mineString}
+	field := Field{Value: &MineString}
 
 	assert.True(t, field.IsMine())
 }
@@ -53,7 +53,7 @@ func TestField_SetMine(t *testing.T) {
 
 	field.SetMine()
 
-	assert.Equal(t, mineString, *field.Value)
+	assert.Equal(t, MineString, *field.Value)
 }
 
 func TestField_setValue(t *testing.T) {

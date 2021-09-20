@@ -167,3 +167,7 @@ func Test_gamesServiceImpl_FindById_err(t *testing.T) {
 	assert.Equal(t, errExpected.Status, err.Status)
 	assert.Nil(t, game)
 }
+
+func Test_hasLost(t *testing.T) {
+
+}
