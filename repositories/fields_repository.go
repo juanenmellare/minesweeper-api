@@ -6,11 +6,13 @@ import (
 	"minesweeper-api/errors"
 	"minesweeper-api/helpers"
 	"minesweeper-api/models"
+	"net/http"
 )
 
 type FieldsRepository interface {
 	FindByIdAndGameId(uuid *uuid.UUID, gameUuid *uuid.UUID) (*models.Field, *errors.ApiError)
 	Update(field *models.Field) *errors.ApiError
+	FindMineFieldsFlaggedByGame(gameUuid *uuid.UUID) (*[]models.Field, *errors.ApiError)
 }
 
 type fieldsRepositoryImpl struct {
@@ -46,4 +48,19 @@ func (f fieldsRepositoryImpl) Update(field *models.Field) *errors.ApiError {
 	}
 
 	return nil
+}
+
+func (f fieldsRepositoryImpl) FindMineFieldsFlaggedByGame(gameUuid *uuid.UUID) (*[]models.Field, *errors.ApiError) {
+	var fields []models.Field
+
+	tx := f.database.Get().
+		Where(map[string]interface{}{
+			"game_id": *gameUuid, "value": models.MineString, "status": models.FieldStatusFlagged,
+		}).Find(&fields)
+	if err := helpers.ValidateDatabaseTxError(tx.Error, ""); err != nil &&
+		err.StatusCode != http.StatusNotFound {
+		return nil, err
+	}
+
+	return &fields, nil
 }

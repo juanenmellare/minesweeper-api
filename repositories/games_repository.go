@@ -11,6 +11,7 @@ import (
 type GamesRepository interface {
 	Create(game *models.Game) *errors.ApiError
 	FindById(uuid *uuid.UUID, hasToPreload bool) (*models.Game, *errors.ApiError)
+	Update(game *models.Game) *errors.ApiError
 }
 
 type gamesRepositoryImpl struct {
@@ -47,4 +48,14 @@ func (g gamesRepositoryImpl) FindById(id *uuid.UUID, hasToPreload bool) (*models
 	}
 
 	return &game, nil
+}
+
+func (g gamesRepositoryImpl) Update(game *models.Game) *errors.ApiError {
+	tx := g.database.Get().Save(&game)
+	baseMessage := "game with uuid " + game.ID.String()
+	if err := helpers.ValidateDatabaseTxError(tx.Error, baseMessage); err != nil {
+		return err
+	}
+
+	return nil
 }

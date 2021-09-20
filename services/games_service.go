@@ -9,7 +9,6 @@ import (
 	"time"
 )
 
-//go:generate mockery --name GamesService --output mocks
 type GamesService interface {
 	Create(settings *models.Settings) (*models.Game, *errors.ApiError)
 	FindById(uuid *uuid.UUID, hasToPreload bool) (*models.Game, *errors.ApiError)
@@ -17,14 +16,18 @@ type GamesService interface {
 }
 
 type gamesServiceImpl struct {
-	gamesRepository  repositories.GamesRepository
-	fieldsRepository repositories.FieldsRepository
+	gamesRepository    repositories.GamesRepository
+	fieldsRepository   repositories.FieldsRepository
+	settingsRepository repositories.SettingsRepository
 }
 
-func NewGamesService(gamesRepository repositories.GamesRepository, fieldsRepository repositories.FieldsRepository) GamesService {
+func NewGamesService(gamesRepository repositories.GamesRepository,
+	fieldsRepository repositories.FieldsRepository,
+	settingsRepository repositories.SettingsRepository) GamesService {
 	return &gamesServiceImpl{
-		gamesRepository:  gamesRepository,
-		fieldsRepository: fieldsRepository,
+		gamesRepository:    gamesRepository,
+		fieldsRepository:   fieldsRepository,
+		settingsRepository: settingsRepository,
 	}
 }
 
@@ -130,6 +133,73 @@ func (g gamesServiceImpl) FindById(uuid *uuid.UUID, hasToPreload bool) (*models.
 	return game, nil
 }
 
+func hasLost(field *models.Field, _ repositories.FieldsRepository, _ repositories.SettingsRepository) (
+	*models.GameStatus, *errors.ApiError) {
+	if field.IsMine() {
+		gameStatus := models.GameStatusLost
+		return &gameStatus, nil
+	}
+
+	return nil, nil
+}
+
+func hasWon(field *models.Field, fieldsRepository repositories.FieldsRepository,
+	settingsRepository repositories.SettingsRepository) (*models.GameStatus, *errors.ApiError) {
+
+	flaggedMines, err := fieldsRepository.FindMineFieldsFlaggedByGame(&field.GameId)
+	if err != nil {
+		return nil, err
+	}
+
+	flaggedMinesQuantity := len(*flaggedMines)
+	if flaggedMinesQuantity == 0 {
+		return nil, err
+	}
+
+	settings, err := settingsRepository.FindByGameId(&field.GameId)
+	if err != nil {
+		return nil, err
+	}
+
+	if settings.MinesQuantity == flaggedMinesQuantity {
+		gameStatus := models.GameStatusWon
+		return &gameStatus, nil
+	}
+
+	return nil, nil
+}
+
+var isGameFinishedStrategyMap = map[models.FieldStatus]func(
+	field *models.Field, fieldsRepository repositories.FieldsRepository,
+	settingsRepository repositories.SettingsRepository) (*models.GameStatus, *errors.ApiError){
+	models.FieldStatusShown:   hasLost,
+	models.FieldStatusFlagged: hasWon,
+}
+
+func (g gamesServiceImpl) validateIfIsFinished(fieldStatus models.FieldStatus, field *models.Field) *errors.ApiError {
+	if hasGameFinished, ok := isGameFinishedStrategyMap[fieldStatus]; ok {
+		gameStatus, err := hasGameFinished(field, g.fieldsRepository, g.settingsRepository)
+		if err != nil {
+			return err
+		}
+		if gameStatus != nil {
+			game, err := g.gamesRepository.FindById(&field.GameId, false)
+			if err != nil {
+				return err
+			}
+			game.Status = *gameStatus
+			now := time.Now()
+			game.EndedAt = &now
+			game.Duration = int(game.EndedAt.Sub(game.StartedAt).Seconds())
+			if err != g.gamesRepository.Update(game) {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 func (g gamesServiceImpl) ExecuteFieldAction(gameUuid *uuid.UUID, fieldUuid *uuid.UUID,
 	fieldStatus models.FieldStatus) *errors.ApiError {
 	field, err := g.fieldsRepository.FindByIdAndGameId(fieldUuid, gameUuid)
@@ -139,6 +209,10 @@ func (g gamesServiceImpl) ExecuteFieldAction(gameUuid *uuid.UUID, fieldUuid *uui
 
 	if err := field.SetStatus(fieldStatus); err != nil {
 		return errors.NewBadRequestApiError(err)
+	}
+
+	if err = g.validateIfIsFinished(fieldStatus, field); err != nil {
+		return err
 	}
 
 	if err = g.fieldsRepository.Update(field); err != nil {

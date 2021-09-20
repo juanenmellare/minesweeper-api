@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-var mineString = "MINE"
+var MineString = "MINE"
 
 type Field struct {
 	ID        uuid.UUID   `json:"id" gorm:"type:uuid;default:uuid_generate_v4()"`
@@ -33,11 +33,11 @@ func (f *Field) IncrementHintValue() {
 }
 
 func (f *Field) SetMine() {
-	f.setValue(mineString)
+	f.setValue(MineString)
 }
 
 func (f *Field) IsMine() bool {
-	return *f.Value == mineString
+	return *f.Value == MineString
 }
 
 func (f *Field) IsNil() bool {
