@@ -19,7 +19,7 @@ func TestValidateFieldStatusTransition(t *testing.T) {
 	assert.NotNil(t, ValidateFieldStatusTransition(FieldStatusShown, FieldStatusFlagged))
 	err = ValidateFieldStatusTransition(FieldStatusShown, FieldStatusShown)
 	assert.NotNil(t, err)
-	assert.Equal(t, "unnecessary status transition", err.Error())
+	assert.Equal(t, "already SHOWN", err.Error())
 	assert.NotNil(t, ValidateFieldStatusTransition(FieldStatusShown, FieldStatusQuestioned))
 
 	assert.Nil(t, ValidateFieldStatusTransition(FieldStatusHidden, FieldStatusShown))
@@ -29,7 +29,7 @@ func TestValidateFieldStatusTransition(t *testing.T) {
 
 	err = ValidateFieldStatusTransition(FieldStatusQuestioned, FieldStatusShown)
 	assert.NotNil(t, err)
-	assert.Equal(t, "the only available transition is from QUESTIONED is to SHOWN", err.Error())
+	assert.Equal(t, "the only available transition for this status is from QUESTIONED is to SHOWN", err.Error())
 	assert.NotNil(t, ValidateFieldStatusTransition(FieldStatusQuestioned, FieldStatusQuestioned))
 	assert.NotNil(t, ValidateFieldStatusTransition(FieldStatusQuestioned, FieldStatusFlagged))
 	assert.Nil(t, ValidateFieldStatusTransition(FieldStatusQuestioned, FieldStatusHidden))

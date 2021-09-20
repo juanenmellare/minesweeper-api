@@ -88,7 +88,7 @@ func Test_gamesControllerImpl_FindById(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 
 	uuidParam := uuid.New()
-	c.Params = append(c.Params, gin.Param{Key: "uuid", Value: uuidParam.String()})
+	c.Params = append(c.Params, gin.Param{Key: "game-uuid", Value: uuidParam.String()})
 
 	gamesServiceMock := new(mocks.GamesService)
 	gamesServiceMock.On("FindById", &uuidParam, true).Return(&models.Game{}, nil)
@@ -109,7 +109,7 @@ func Test_gamesControllerImpl_FindById_err(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 
 	uuidParam := uuid.New()
-	c.Params = append(c.Params, gin.Param{Key: "uuid", Value: uuidParam.String()})
+	c.Params = append(c.Params, gin.Param{Key: "game-uuid", Value: uuidParam.String()})
 
 	gamesServiceMock := new(mocks.GamesService)
 	err := errors.NewNotFoundError(errors.NewError("not_found"))

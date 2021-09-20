@@ -12,6 +12,7 @@ import (
 type GamesController interface {
 	Create(context *gin.Context)
 	FindById(context *gin.Context)
+	ExecuteFieldAction(context *gin.Context)
 }
 
 type gamesControllerImpl struct {
@@ -42,7 +43,7 @@ func (g gamesControllerImpl) Create(context *gin.Context) {
 }
 
 func (g gamesControllerImpl) FindById(context *gin.Context) {
-	uuidParam := uuid.MustParse(context.Param("uuid"))
+	uuidParam := uuid.MustParse(context.Param("game-uuid"))
 
 	game, err := g.gamesService.FindById(&uuidParam, true)
 	if err != nil {
@@ -51,4 +52,33 @@ func (g gamesControllerImpl) FindById(context *gin.Context) {
 	}
 
 	context.JSON(http.StatusOK, game)
+}
+
+var fieldActionsMap = map[string]models.FieldStatus{
+	"show":     models.FieldStatusShown,
+	"question": models.FieldStatusQuestioned,
+	"hide":     models.FieldStatusHidden,
+	"flag":     models.FieldStatusFlagged,
+}
+
+func (g gamesControllerImpl) ExecuteFieldAction(context *gin.Context) {
+	action := context.Param("action")
+	status, ok := fieldActionsMap[action]
+	if !ok {
+		err := errors.NewBadRequestApiError(errors.NewError("field action " + action + " route not found"))
+		context.JSON(err.StatusCode, err)
+		return
+	}
+
+	gameUuid := uuid.MustParse(context.Param("game-uuid"))
+	fieldUuid := uuid.MustParse(context.Param("field-uuid"))
+
+	if err := g.gamesService.ExecuteFieldAction(&gameUuid, &fieldUuid, status); err != nil {
+		context.JSON(err.StatusCode, err)
+		return
+	}
+
+	context.JSON(http.StatusAccepted, gin.H{
+		"message": "field " + status,
+	})
 }

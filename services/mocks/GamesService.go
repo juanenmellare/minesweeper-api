@@ -42,6 +42,22 @@ func (_m *GamesService) Create(settings *models.Settings) (*models.Game, *errors
 	return r0, r1
 }
 
+// ExecuteFieldAction provides a mock function with given fields: gameUuid, fieldUuid, fieldStatus
+func (_m *GamesService) ExecuteFieldAction(gameUuid *uuid.UUID, fieldUuid *uuid.UUID, fieldStatus models.FieldStatus) *errors.ApiError {
+	ret := _m.Called(gameUuid, fieldUuid, fieldStatus)
+
+	var r0 *errors.ApiError
+	if rf, ok := ret.Get(0).(func(*uuid.UUID, *uuid.UUID, models.FieldStatus) *errors.ApiError); ok {
+		r0 = rf(gameUuid, fieldUuid, fieldStatus)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*errors.ApiError)
+		}
+	}
+
+	return r0
+}
+
 // FindById provides a mock function with given fields: _a0, hasToPreload
 func (_m *GamesService) FindById(_a0 *uuid.UUID, hasToPreload bool) (*models.Game, *errors.ApiError) {
 	ret := _m.Called(_a0, hasToPreload)

@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	"minesweeper-api/databases"
 	"minesweeper-api/errors"
+	"minesweeper-api/helpers"
 	"minesweeper-api/models"
 )
 
@@ -37,12 +38,12 @@ func (g gamesRepositoryImpl) FindById(id *uuid.UUID, hasToPreload bool) (*models
 
 	database := g.database.Get()
 	if hasToPreload {
-		database.Preload("Settings").Preload("Minefield")
+		database = database.Preload("Minefield").Preload("Settings")
 	}
-
 	tx := database.Find(&game).Last(&game)
-	if err := tx.Error; err != nil {
-		return nil, errors.NewInternalServerApiError(err)
+	baseMessage := "game with uuid " + id.String()
+	if err := helpers.ValidateDatabaseTxError(tx.Error, baseMessage); err != nil {
+		return nil, err
 	}
 
 	return &game, nil

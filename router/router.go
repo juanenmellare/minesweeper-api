@@ -11,12 +11,14 @@ func New(domainLayers factories.DomainLayersFactory) *gin.Engine {
 	router.GET("/ping", domainLayers.GetHealthChecksController().Ping)
 
 	gamesController := domainLayers.GetGamesController()
-	v1Group := router.Group("/v1")
-	{
-		v1Group.POST("/games", gamesController.Create)
-		v1Group.GET("/games/:uuid", gamesController.FindById)
+	v1 := router.Group("/v1")
 
-	}
+	games := v1.Group("/games")
+	games.POST("/", gamesController.Create)
 
+	uuid := games.Group("/:game-uuid")
+	uuid.GET("/", gamesController.FindById)
+
+	uuid.PUT("/fields/:field-uuid/:action", gamesController.ExecuteFieldAction)
 	return router
 }

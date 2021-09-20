@@ -9,18 +9,22 @@ import (
 	"time"
 )
 
+//go:generate mockery --name GamesService --output mocks
 type GamesService interface {
 	Create(settings *models.Settings) (*models.Game, *errors.ApiError)
 	FindById(uuid *uuid.UUID, hasToPreload bool) (*models.Game, *errors.ApiError)
+	ExecuteFieldAction(gameUuid *uuid.UUID, fieldUuid *uuid.UUID, fieldStatus models.FieldStatus) *errors.ApiError
 }
 
 type gamesServiceImpl struct {
-	gamesRepository repositories.GamesRepository
+	gamesRepository  repositories.GamesRepository
+	fieldsRepository repositories.FieldsRepository
 }
 
-func NewGamesService(gamesRepository repositories.GamesRepository) GamesService {
+func NewGamesService(gamesRepository repositories.GamesRepository, fieldsRepository repositories.FieldsRepository) GamesService {
 	return &gamesServiceImpl{
-		gamesRepository: gamesRepository,
+		gamesRepository:  gamesRepository,
+		fieldsRepository: fieldsRepository,
 	}
 }
 
@@ -124,4 +128,22 @@ func (g gamesServiceImpl) FindById(uuid *uuid.UUID, hasToPreload bool) (*models.
 	}
 
 	return game, nil
+}
+
+func (g gamesServiceImpl) ExecuteFieldAction(gameUuid *uuid.UUID, fieldUuid *uuid.UUID,
+	fieldStatus models.FieldStatus) *errors.ApiError {
+	field, err := g.fieldsRepository.FindByIdAndGameId(fieldUuid, gameUuid)
+	if err != nil {
+		return err
+	}
+
+	if err := field.SetStatus(fieldStatus); err != nil {
+		return errors.NewBadRequestApiError(err)
+	}
+
+	if err = g.fieldsRepository.Update(field); err != nil {
+		return err
+	}
+
+	return nil
 }

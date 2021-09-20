@@ -15,7 +15,7 @@ func TestNewGamesService(t *testing.T) {
 	gamesRepositoryMock := new(mocks.GamesRepository)
 	gamesRepositoryMock.On("Create", &models.Game{}).Return(nil)
 
-	gameService := NewGamesService(gamesRepositoryMock)
+	gameService := NewGamesService(gamesRepositoryMock, nil)
 
 	assert.Implements(t, (*GamesService)(nil), gameService)
 }
@@ -30,7 +30,7 @@ func Test_gamesServiceImpl_Create(t *testing.T) {
 		StartedAt: time.Now(), Settings: *settings, Minefield: &minefield, Status: models.GameStatusInProgress,
 	}
 
-	gameService := NewGamesService(gamesRepositoryMock)
+	gameService := NewGamesService(gamesRepositoryMock, nil)
 
 	game, err := gameService.Create(settings)
 
@@ -45,7 +45,7 @@ func Test_gamesServiceImpl_Create_new_game_err(t *testing.T) {
 	gamesRepositoryMock := new(mocks.GamesRepository)
 	gamesRepositoryMock.On("Create", &models.Game{}).Return(nil)
 
-	gameService := NewGamesService(gamesRepositoryMock)
+	gameService := NewGamesService(gamesRepositoryMock, nil)
 
 	settings := &models.Settings{Width: 0, Height: 3, MinesQuantity: 1}
 
@@ -60,7 +60,7 @@ func Test_gamesServiceImpl_Create_repository_create_err(t *testing.T) {
 	errExpected := errors.NewInternalServerApiError(errors.NewError("panic"))
 	gamesRepositoryMock.On("Create", mock.AnythingOfType("*models.Game")).Return(errExpected)
 
-	gameService := NewGamesService(gamesRepositoryMock)
+	gameService := NewGamesService(gamesRepositoryMock, nil)
 
 	settings := &models.Settings{Width: 3, Height: 3, MinesQuantity: 1}
 
@@ -146,7 +146,7 @@ func Test_gamesServiceImpl_FindById(t *testing.T) {
 	uuidParam := uuid.New()
 	gamesRepositoryMock.On("FindById", &uuidParam, true).Return(gameExpected, nil)
 
-	gameService := NewGamesService(gamesRepositoryMock)
+	gameService := NewGamesService(gamesRepositoryMock, nil)
 
 	game, err := gameService.FindById(&uuidParam, true)
 
@@ -160,7 +160,7 @@ func Test_gamesServiceImpl_FindById_err(t *testing.T) {
 	uuidParam := uuid.New()
 	gamesRepositoryMock.On("FindById", &uuidParam, true).Return(nil, errExpected)
 
-	gameService := NewGamesService(gamesRepositoryMock)
+	gameService := NewGamesService(gamesRepositoryMock, nil)
 
 	game, err := gameService.FindById(&uuidParam, true)
 

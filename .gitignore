@@ -16,6 +16,7 @@
 
 # IDEs
 .idea
+.DS_Store
 
 # Temp
 tmp
