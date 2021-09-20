@@ -25,7 +25,7 @@ func main() {
 
 	domainLayersFactory := factories.NewDomainLayersFactory(relationalDatabase)
 
-	port := ":8080"
+	port := ":" + config.GetPort()
 	if err := router.New(domainLayersFactory).Run(port); err != nil {
 		logger.Fatalf("Error while trying to create the router: " + err.Error())
 	}
