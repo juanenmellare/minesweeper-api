@@ -12,3 +12,6 @@ format:
 
 tests:
 	sh .dev_environment/scripts/test_code.sh
+
+tests-report:
+	sh .dev_environment/scripts/test_report_code.sh

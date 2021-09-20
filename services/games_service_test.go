@@ -7,6 +7,7 @@ import (
 	"minesweeper-api/errors"
 	"minesweeper-api/models"
 	"minesweeper-api/repositories/mocks"
+	"net/http"
 	"testing"
 	"time"
 )
@@ -41,7 +42,7 @@ func Test_gamesServiceImpl_Create(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func Test_gamesServiceImpl_Create_new_game_err(t *testing.T) {
+func Test_gamesServiceImpl_Create_new_game_error(t *testing.T) {
 	gamesRepositoryMock := new(mocks.GamesRepository)
 	gamesRepositoryMock.On("Create", &models.Game{}).Return(nil)
 
@@ -169,5 +170,241 @@ func Test_gamesServiceImpl_FindById_err(t *testing.T) {
 }
 
 func Test_hasLost(t *testing.T) {
+	field := &models.Field{Status: models.FieldStatusShown}
 
+	status, err := hasLost(field, nil, nil)
+
+	assert.Nil(t, status)
+	assert.Nil(t, err)
 }
+
+func Test_hasLost_status_lost(t *testing.T) {
+	field := &models.Field{Status: models.FieldStatusShown, Value: &models.MineString}
+
+	status, err := hasLost(field, nil, nil)
+
+	assert.Equal(t, models.GameStatusLost, *status)
+	assert.Nil(t, err)
+}
+
+func Test_hasWon(t *testing.T) {
+	settings := models.Settings{MinesQuantity: 3}
+	gameUuid := uuid.New()
+	game := &models.Game{ID: gameUuid, Settings: settings}
+	field := &models.Field{Status: models.FieldStatusShown, GameId: gameUuid}
+
+	gamesRepositoryMock := new(mocks.FieldsRepository)
+	gamesRepositoryMock.On("FindMineFieldsFlaggedByGame", &gameUuid).Return(&[]models.Field{{}, {}}, nil)
+
+	status, err := hasWon(field, game, gamesRepositoryMock)
+
+	assert.Nil(t, status)
+	assert.Nil(t, err)
+}
+
+func Test_hasWon_status_won(t *testing.T) {
+	settings := models.Settings{MinesQuantity: 3}
+	gameUuid := uuid.New()
+	game := &models.Game{ID: gameUuid, Settings: settings}
+	field := &models.Field{Status: models.FieldStatusShown, GameId: gameUuid}
+
+	gamesRepositoryMock := new(mocks.FieldsRepository)
+	gamesRepositoryMock.On("FindMineFieldsFlaggedByGame", &gameUuid).Return(&[]models.Field{{}, {}, {}}, nil)
+
+	status, err := hasWon(field, game, gamesRepositoryMock)
+
+	assert.Equal(t, models.GameStatusWon, *status)
+	assert.Nil(t, err)
+}
+
+func Test_hasWon_status_error(t *testing.T) {
+	settings := models.Settings{MinesQuantity: 3}
+	gameUuid := uuid.New()
+	game := &models.Game{ID: gameUuid, Settings: settings}
+	field := &models.Field{Status: models.FieldStatusShown, GameId: gameUuid}
+
+	gamesRepositoryMock := new(mocks.FieldsRepository)
+	errExpected := errors.NewInternalServerApiError(errors.NewError("panic"))
+	gamesRepositoryMock.On("FindMineFieldsFlaggedByGame", &gameUuid).
+		Return(nil, errExpected)
+
+	status, err := hasWon(field, game, gamesRepositoryMock)
+
+	assert.Nil(t, status)
+	assert.Equal(t, errExpected, err)
+}
+
+func Test_gamesServiceImpl_ExecuteFieldAction(t *testing.T) {
+	gameUuid := uuid.New()
+	game := &models.Game{ID: gameUuid, Status: models.GameStatusInProgress}
+	fieldUuid := uuid.New()
+	field := &models.Field{ID: fieldUuid, Status: models.FieldStatusHidden, GameId: gameUuid, Value: &models.MineString}
+
+	gamesRepositoryMock := new(mocks.GamesRepository)
+	gamesRepositoryMock.On("FindById", &gameUuid, false).Return(game, nil)
+	gamesRepositoryMock.On("Update", mock.Anything).Return(nil)
+
+	fieldRepositoryMock := new(mocks.FieldsRepository)
+	fieldRepositoryMock.On("FindByIdAndGameId", &fieldUuid, &gameUuid).Return(field, nil)
+	fieldRepositoryMock.On("Update", mock.Anything).Return(nil)
+
+	gameService := NewGamesService(gamesRepositoryMock, fieldRepositoryMock)
+
+	fieldStatus := models.FieldStatusShown
+
+	err := gameService.ExecuteFieldAction(&gameUuid, &fieldUuid, fieldStatus)
+
+	assert.NotEqual(t, models.GameStatusInProgress, game.Status)
+	assert.NotNil(t, game.EndedAt)
+	assert.Nil(t, err)
+}
+
+func Test_gamesServiceImpl_ExecuteFieldAction_FindById_error(t *testing.T) {
+	gameUuid := uuid.New()
+	fieldUuid := uuid.New()
+
+	gamesRepositoryMock := new(mocks.GamesRepository)
+	errExpected := errors.NewInternalServerApiError(errors.NewError("panic"))
+	gamesRepositoryMock.On("FindById", &gameUuid, false).Return(nil, errExpected)
+
+	gameService := NewGamesService(gamesRepositoryMock, nil)
+
+	fieldStatus := models.FieldStatusShown
+
+	err := gameService.ExecuteFieldAction(&gameUuid, &fieldUuid, fieldStatus)
+
+	assert.Equal(t, errExpected, err)
+}
+
+func Test_gamesServiceImpl_ExecuteFieldAction_FindById_notInProgress_error(t *testing.T) {
+	gameUuid := uuid.New()
+	game := &models.Game{ID: gameUuid, Status: models.GameStatusLost}
+	fieldUuid := uuid.New()
+
+	gamesRepositoryMock := new(mocks.GamesRepository)
+	gamesRepositoryMock.On("FindById", &gameUuid, false).Return(game, nil)
+
+	gameService := NewGamesService(gamesRepositoryMock, nil)
+
+	fieldStatus := models.FieldStatusShown
+
+	err := gameService.ExecuteFieldAction(&gameUuid, &fieldUuid, fieldStatus)
+
+	assert.Equal(t, http.StatusBadRequest, err.StatusCode)
+	assert.Equal(t, "game " + gameUuid.String() + " is finished", err.Message)
+}
+
+func Test_gamesServiceImpl_ExecuteFieldAction_FindByIdAndGameId_error(t *testing.T) {
+	gameUuid := uuid.New()
+	game := &models.Game{ID: gameUuid, Status: models.GameStatusInProgress}
+	fieldUuid := uuid.New()
+
+	gamesRepositoryMock := new(mocks.GamesRepository)
+	gamesRepositoryMock.On("FindById", &gameUuid, false).Return(game, nil)
+
+	fieldRepositoryMock := new(mocks.FieldsRepository)
+	errExpected := errors.NewInternalServerApiError(errors.NewError("panic"))
+	fieldRepositoryMock.On("FindByIdAndGameId", &fieldUuid, &gameUuid).Return(nil, errExpected)
+
+	gameService := NewGamesService(gamesRepositoryMock, fieldRepositoryMock)
+
+	fieldStatus := models.FieldStatusShown
+
+	err := gameService.ExecuteFieldAction(&gameUuid, &fieldUuid, fieldStatus)
+
+	assert.Equal(t, errExpected, err)
+}
+
+func Test_gamesServiceImpl_ExecuteFieldAction_setStatus_error(t *testing.T) {
+	gameUuid := uuid.New()
+	game := &models.Game{ID: gameUuid, Status: models.GameStatusInProgress}
+	fieldUuid := uuid.New()
+	field := &models.Field{ID: fieldUuid, Status: models.FieldStatusShown, GameId: gameUuid, Value: &models.MineString}
+
+	gamesRepositoryMock := new(mocks.GamesRepository)
+	gamesRepositoryMock.On("FindById", &gameUuid, false).Return(game, nil)
+
+	fieldRepositoryMock := new(mocks.FieldsRepository)
+	fieldRepositoryMock.On("FindByIdAndGameId", &fieldUuid, &gameUuid).Return(field, nil)
+
+	gameService := NewGamesService(gamesRepositoryMock, fieldRepositoryMock)
+
+	fieldStatus := models.FieldStatusShown
+
+	err := gameService.ExecuteFieldAction(&gameUuid, &fieldUuid, fieldStatus)
+
+	assert.Equal(t, http.StatusBadRequest, err.StatusCode)
+}
+
+func Test_gamesServiceImpl_ExecuteFieldAction_fieldUpdate_error(t *testing.T) {
+	gameUuid := uuid.New()
+	game := &models.Game{ID: gameUuid, Status: models.GameStatusInProgress}
+	fieldUuid := uuid.New()
+	field := &models.Field{ID: fieldUuid, Status: models.FieldStatusHidden, GameId: gameUuid, Value: &models.MineString}
+
+	gamesRepositoryMock := new(mocks.GamesRepository)
+	gamesRepositoryMock.On("FindById", &gameUuid, false).Return(game, nil)
+
+	fieldRepositoryMock := new(mocks.FieldsRepository)
+	fieldRepositoryMock.On("FindByIdAndGameId", &fieldUuid, &gameUuid).Return(field, nil)
+	errExpected := errors.NewInternalServerApiError(errors.NewError("panic"))
+	fieldRepositoryMock.On("Update", mock.Anything).Return(errExpected)
+
+	gameService := NewGamesService(gamesRepositoryMock, fieldRepositoryMock)
+
+	fieldStatus := models.FieldStatusShown
+
+	err := gameService.ExecuteFieldAction(&gameUuid, &fieldUuid, fieldStatus)
+
+	assert.Equal(t, errExpected, err)
+}
+
+func Test_gamesServiceImpl_ExecuteFieldAction_flagged_error(t *testing.T) {
+	gameUuid := uuid.New()
+	game := &models.Game{ID: gameUuid, Status: models.GameStatusInProgress}
+	fieldUuid := uuid.New()
+	field := &models.Field{ID: fieldUuid, Status: models.FieldStatusHidden, GameId: gameUuid, Value: &models.MineString}
+
+	gamesRepositoryMock := new(mocks.GamesRepository)
+	gamesRepositoryMock.On("FindById", &gameUuid, false).Return(game, nil)
+
+	fieldRepositoryMock := new(mocks.FieldsRepository)
+	fieldRepositoryMock.On("FindByIdAndGameId", &fieldUuid, &gameUuid).Return(field, nil)
+	fieldRepositoryMock.On("Update", mock.Anything).Return(nil)
+	errExpected := errors.NewInternalServerApiError(errors.NewError("panic"))
+	fieldRepositoryMock.On("FindMineFieldsFlaggedByGame", mock.Anything).
+		Return(nil, errExpected)
+
+	gameService := NewGamesService(gamesRepositoryMock, fieldRepositoryMock)
+
+	fieldStatus := models.FieldStatusFlagged
+
+	err := gameService.ExecuteFieldAction(&gameUuid, &fieldUuid, fieldStatus)
+
+	assert.Equal(t, errExpected, err)
+}
+
+func Test_gamesServiceImpl_ExecuteFieldAction_game_update_error(t *testing.T) {
+	gameUuid := uuid.New()
+	game := &models.Game{ID: gameUuid, Status: models.GameStatusInProgress}
+	fieldUuid := uuid.New()
+	field := &models.Field{ID: fieldUuid, Status: models.FieldStatusHidden, GameId: gameUuid, Value: &models.MineString}
+
+	gamesRepositoryMock := new(mocks.GamesRepository)
+	gamesRepositoryMock.On("FindById", &gameUuid, false).Return(game, nil)
+	errExpected := errors.NewInternalServerApiError(errors.NewError("panic"))
+	gamesRepositoryMock.On("Update", mock.Anything).Return(errExpected)
+
+	fieldRepositoryMock := new(mocks.FieldsRepository)
+	fieldRepositoryMock.On("FindByIdAndGameId", &fieldUuid, &gameUuid).Return(field, nil)
+	fieldRepositoryMock.On("Update", mock.Anything).Return(nil)
+
+	gameService := NewGamesService(gamesRepositoryMock, fieldRepositoryMock)
+
+	fieldStatus := models.FieldStatusShown
+
+	err := gameService.ExecuteFieldAction(&gameUuid, &fieldUuid, fieldStatus)
+
+	assert.Equal(t, errExpected, err)
+}
+

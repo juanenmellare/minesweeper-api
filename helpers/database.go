@@ -10,7 +10,6 @@ func ValidateDatabaseTxError(err error, baseMessage string) *errors.ApiError {
 		case "record not found":
 			return errors.NewNotFoundError(errors.NewError(baseMessage + " not found"))
 		}
-
 		return errors.NewInternalServerApiError(err)
 	}
 

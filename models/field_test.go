@@ -83,3 +83,19 @@ func TestField_SetInitialValue(t *testing.T) {
 
 	assert.Equal(t, FieldStatusHidden, field.Status)
 }
+
+func TestField_SetStatus(t *testing.T) {
+	field := Field{}
+
+	err := field.SetStatus(FieldStatusFlagged)
+
+	assert.Nil(t, err)
+}
+
+func TestField_SetStatus_error(t *testing.T) {
+	field := Field{Status: FieldStatusShown}
+
+	err := field.SetStatus(FieldStatusFlagged)
+
+	assert.NotNil(t, err)
+}

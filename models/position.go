@@ -12,5 +12,4 @@ func (p Position) String() string {
 	xString := strconv.Itoa(p.X)
 
 	return "{ y: " + yString + ", x: " + xString + " }"
-
 }

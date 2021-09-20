@@ -34,8 +34,8 @@ func Test_gamesControllerImpl_Create(t *testing.T) {
 	gamesController.Create(c)
 
 	expectedJsonString := "{\"id\":\"00000000-0000-0000-0000-000000000000\",\"startedAt\":\"0001-01-01T00:00:00Z\"," +
-		"\"endedAt\":null,\"duration\":0,\"settings\":{\"id\":\"00000000-0000-0000-0000-000000000000\",\"width\":0," +
-		"\"height\":0,\"minesQuantity\":0},\"minefield\":null,\"status\":\"\"}"
+		"\"endedAt\":null,\"duration\":0,\"settings\":{\"width\":0,\"height\":0,\"minesQuantity\":0}," +
+		"\"minefield\":null,\"status\":\"\"}"
 
 	assert.Equal(t, http.StatusCreated, w.Code)
 	assert.Equal(t, expectedJsonString, w.Body.String())
@@ -99,8 +99,8 @@ func Test_gamesControllerImpl_FindById(t *testing.T) {
 	gamesController.FindById(c)
 
 	expectedJsonString := "{\"id\":\"00000000-0000-0000-0000-000000000000\",\"startedAt\":\"0001-01-01T00:00:00Z\"," +
-		"\"endedAt\":null,\"duration\":0,\"settings\":{\"id\":\"00000000-0000-0000-0000-000000000000\",\"width\":0," +
-		"\"height\":0,\"minesQuantity\":0},\"minefield\":null,\"status\":\"\"}"
+		"\"endedAt\":null,\"duration\":0,\"settings\":{\"width\":0,\"height\":0,\"minesQuantity\":0}," +
+		"\"minefield\":null,\"status\":\"\"}"
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Equal(t, expectedJsonString, w.Body.String())
@@ -120,6 +120,75 @@ func Test_gamesControllerImpl_FindById_err(t *testing.T) {
 	gamesController := NewGamesController(gamesServiceMock)
 
 	gamesController.FindById(c)
+
+	expectedJsonString := "{\"message\":\"not_found\",\"status\":\"not found\",\"status_code\":404}"
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+	assert.Equal(t, expectedJsonString, w.Body.String())
+}
+
+func Test_gamesControllerImpl_ExecuteFieldAction(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	gameUuid := uuid.New()
+	c.Params = append(c.Params, gin.Param{Key: "game-uuid", Value: gameUuid.String()})
+	fieldUuid := uuid.New()
+	c.Params = append(c.Params, gin.Param{Key: "field-uuid", Value: fieldUuid.String()})
+	action := "show"
+	c.Params = append(c.Params, gin.Param{Key: "action", Value: action})
+
+	gamesServiceMock := new(mocks.GamesService)
+	gamesServiceMock.On("ExecuteFieldAction", &gameUuid, &fieldUuid, models.FieldStatusShown).
+		Return(nil)
+	gamesController := NewGamesController(gamesServiceMock)
+
+	gamesController.ExecuteFieldAction(c)
+
+	expectedJsonString := "{\"message\":\"field SHOWN\"}"
+
+	assert.Equal(t, http.StatusAccepted, w.Code)
+	assert.Equal(t, expectedJsonString, w.Body.String())
+}
+
+func Test_gamesControllerImpl_ExecuteFieldAction_action_error(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	action := "showw"
+	c.Params = append(c.Params, gin.Param{Key: "action", Value: action})
+
+	gamesServiceMock := new(mocks.GamesService)
+
+	gamesController := NewGamesController(gamesServiceMock)
+
+	gamesController.ExecuteFieldAction(c)
+
+	expectedJsonString := "{\"message\":\"field action /showw route not found\",\"status\":\"bad request\"," +
+		"\"status_code\":400}"
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, expectedJsonString, w.Body.String())
+}
+
+func Test_gamesControllerImpl_ExecuteFieldAction_error(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	gameUuid := uuid.New()
+	c.Params = append(c.Params, gin.Param{Key: "game-uuid", Value: gameUuid.String()})
+	fieldUuid := uuid.New()
+	c.Params = append(c.Params, gin.Param{Key: "field-uuid", Value: fieldUuid.String()})
+	action := "show"
+	c.Params = append(c.Params, gin.Param{Key: "action", Value: action})
+
+	gamesServiceMock := new(mocks.GamesService)
+	err := errors.NewNotFoundError(errors.NewError("not_found"))
+	gamesServiceMock.On("ExecuteFieldAction", &gameUuid, &fieldUuid, models.FieldStatusShown).
+		Return(err)
+	gamesController := NewGamesController(gamesServiceMock)
+
+	gamesController.ExecuteFieldAction(c)
 
 	expectedJsonString := "{\"message\":\"not_found\",\"status\":\"not found\",\"status_code\":404}"
 

@@ -46,12 +46,12 @@ func fillMinefieldWithMines(minefield *[][]models.Field, settings *models.Settin
 	return minesPositions
 }
 
-func fillMinefieldWithHints(minefield *[][]models.Field, settings *models.Settings, minesPositions []models.Position) {
-	var borderingPositions = []models.Position{
-		{X: 0, Y: 1}, {X: 1, Y: 1}, {X: 1, Y: 0}, {X: 1, Y: -1},
-		{X: 0, Y: -1}, {X: -1, Y: -1}, {X: -1, Y: 0}, {X: -1, Y: 1},
-	}
+var borderingPositions = []models.Position{
+	{X: 0, Y: 1}, {X: 1, Y: 1}, {X: 1, Y: 0}, {X: 1, Y: -1},
+	{X: 0, Y: -1}, {X: -1, Y: -1}, {X: -1, Y: 0}, {X: -1, Y: 1},
+}
 
+func fillMinefieldWithHints(minefield *[][]models.Field, settings *models.Settings, minesPositions []models.Position) {
 	for _, position := range minesPositions {
 		for _, borderingPosition := range borderingPositions {
 			candidatePositionY := position.Y + borderingPosition.Y
@@ -133,8 +133,27 @@ func (g gamesServiceImpl) FindById(uuid *uuid.UUID, hasToPreload bool) (*models.
 	return game, nil
 }
 
+func fillMinefield(fields []models.Field, height, width int) [][]models.Field {
+	minefield := make([][]models.Field, height)
+	for index := range minefield {
+		minefield[index] = make([]models.Field, width)
+	}
+
+	for _, field := range fields {
+		minefield[field.PositionY][field.PositionX] = field
+	}
+
+	return minefield
+}
+
+func showAdjacentFields(field models.Field, minefield [][]models.Field) {
+
+
+}
+
+
 func hasLost(field *models.Field, _ *models.Game, _ repositories.FieldsRepository) (*models.GameStatus, *errors.ApiError) {
-	if field.IsMine() {
+	if !field.IsNil() && field.IsMine() {
 		gameStatus := models.GameStatusLost
 		return &gameStatus, nil
 	}
@@ -164,7 +183,8 @@ var candidateFinishActionStrategyMap = map[models.FieldStatus]func(
 	models.FieldStatusFlagged: hasWon,
 }
 
-func (g gamesServiceImpl) validateIfIsFinished(fieldStatus models.FieldStatus, field *models.Field, game *models.Game) *errors.ApiError {
+func (g gamesServiceImpl) validateIfHasFinished(fieldStatus models.FieldStatus, field *models.Field,
+	game *models.Game) *errors.ApiError {
 	if hasGameFinished, ok := candidateFinishActionStrategyMap[fieldStatus]; ok {
 		gameStatus, err := hasGameFinished(field, game, g.fieldsRepository)
 		if err != nil {
@@ -175,7 +195,7 @@ func (g gamesServiceImpl) validateIfIsFinished(fieldStatus models.FieldStatus, f
 			now := time.Now()
 			game.EndedAt = &now
 			game.Duration = int(game.EndedAt.Sub(game.StartedAt).Seconds())
-			if err != g.gamesRepository.Update(game) {
+			if err = g.gamesRepository.Update(game); err!= nil {
 				return err
 			}
 		}
@@ -186,18 +206,18 @@ func (g gamesServiceImpl) validateIfIsFinished(fieldStatus models.FieldStatus, f
 
 func (g gamesServiceImpl) ExecuteFieldAction(gameUuid *uuid.UUID, fieldUuid *uuid.UUID,
 	fieldStatus models.FieldStatus) *errors.ApiError {
-	field, err := g.fieldsRepository.FindByIdAndGameId(fieldUuid, gameUuid)
-	if err != nil {
-		return err
-	}
-
-	game, err := g.gamesRepository.FindById(&field.GameId, false)
+	game, err := g.gamesRepository.FindById(gameUuid, false)
 	if err != nil {
 		return err
 	}
 
 	if game.Status != models.GameStatusInProgress {
 		return errors.NewBadRequestApiError(errors.NewError("game " + game.ID.String() + " is finished"))
+	}
+
+	field, err := g.fieldsRepository.FindByIdAndGameId(fieldUuid, gameUuid)
+	if err != nil {
+		return err
 	}
 
 	if err := field.SetStatus(fieldStatus); err != nil {
@@ -208,7 +228,7 @@ func (g gamesServiceImpl) ExecuteFieldAction(gameUuid *uuid.UUID, fieldUuid *uui
 		return err
 	}
 
-	if err = g.validateIfIsFinished(fieldStatus, field, game); err != nil {
+	if err = g.validateIfHasFinished(fieldStatus, field, game); err != nil {
 		return err
 	}
 

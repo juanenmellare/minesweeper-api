@@ -65,11 +65,10 @@ func (g gamesControllerImpl) ExecuteFieldAction(context *gin.Context) {
 	action := context.Param("action")
 	status, ok := fieldActionsMap[action]
 	if !ok {
-		err := errors.NewBadRequestApiError(errors.NewError("field action " + action + " route not found"))
+		err := errors.NewBadRequestApiError(errors.NewError("field action /" + action + " route not found"))
 		context.JSON(err.StatusCode, err)
 		return
 	}
-
 	gameUuid := uuid.MustParse(context.Param("game-uuid"))
 	fieldUuid := uuid.MustParse(context.Param("field-uuid"))
 
