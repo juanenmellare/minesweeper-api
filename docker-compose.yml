@@ -3,7 +3,7 @@ services:
   minesweeper-api:
     build:
       context: .
-      dockerfile: dev.Dockerfile
+      dockerfile: .dev_environment/docker-images/dev.Dockerfile
     volumes:
       - ./:/go/src/minesweeper-api
     links:
@@ -21,9 +21,9 @@ services:
   dbpostgres:
     build:
       context: .
-      dockerfile: pg.Dockerfile
+      dockerfile: .dev_environment/docker-images/postgres.Dockerfile
     volumes:
-      - ./postgres-data:/var/lib/postgresql
+      - .dev_environment/docker-images/postgres-data:/var/lib/postgresql
     environment:
       - POSTGRES_DB=${DATABASE_NAME}
       - POSTGRES_USER=${DATABASE_USER}

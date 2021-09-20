@@ -2,8 +2,8 @@
 
 
 ### Requirements
-Golang 1.16
-
+- Golang 1.16
+- Docker
 
 ### Run linter and tests
 ```bash
