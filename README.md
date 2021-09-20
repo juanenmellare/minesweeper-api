@@ -1,16 +1,20 @@
 # Minesweeper API
 
-
 ### Requirements
 - Golang 1.16
 - Docker
 
-### Run linter and tests
+### Format code
 ```bash
-make format-and-tests
+make format
 ```
 
-### Run API
+### Run tests
 ```bash
-make run
+make tests
+```
+
+### Run API with postgres (docker + live reload)
+```bash
+make docker-up
 ```

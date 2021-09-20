@@ -1,8 +1,14 @@
 docker-up:
 	docker-compose up
 
-run-docker-up:
-	docker-compose
+docker-up-build:
+	docker-up --build
 
-format-and-tests:
-	sh format_and_tests.sh
+docker-down:
+	docker-compose down
+
+format:
+	sh .dev_environment/scripts/format_code.sh
+
+tests:
+	sh .dev_environment/scripts/test_code.sh
