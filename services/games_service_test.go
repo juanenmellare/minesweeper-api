@@ -142,7 +142,8 @@ func Test_fillFieldsPositionsAndFlat(t *testing.T) {
 
 func Test_gamesServiceImpl_FindById(t *testing.T) {
 	gamesRepositoryMock := new(mocks.GamesRepository)
-	gameExpected := &models.Game{}
+	gameExpected := &models.Game{
+		Minefield: &[]models.Field{{Status: models.FieldStatusHidden, Value: &models.MineString}}}
 
 	uuidParam := uuid.New()
 	gamesRepositoryMock.On("FindById", &uuidParam, true).Return(gameExpected, nil)
@@ -286,8 +287,9 @@ func Test_gamesServiceImpl_ExecuteFieldAction(t *testing.T) {
 
 	fieldStatus := models.FieldStatusShown
 
-	err := gameService.ExecuteFieldAction(&gameUuid, &fieldUuid, fieldStatus)
+	status, err := gameService.ExecuteFieldAction(&gameUuid, &fieldUuid, fieldStatus)
 
+	assert.Equal(t, &game.Status, status)
 	assert.NotEqual(t, models.GameStatusInProgress, game.Status)
 	assert.NotNil(t, game.EndedAt)
 	assert.Nil(t, err)
@@ -305,8 +307,9 @@ func Test_gamesServiceImpl_ExecuteFieldAction_FindById_error(t *testing.T) {
 
 	fieldStatus := models.FieldStatusShown
 
-	err := gameService.ExecuteFieldAction(&gameUuid, &fieldUuid, fieldStatus)
+	status, err := gameService.ExecuteFieldAction(&gameUuid, &fieldUuid, fieldStatus)
 
+	assert.Nil(t, status)
 	assert.Equal(t, errExpected, err)
 }
 
@@ -322,8 +325,9 @@ func Test_gamesServiceImpl_ExecuteFieldAction_FindById_notInProgress_error(t *te
 
 	fieldStatus := models.FieldStatusShown
 
-	err := gameService.ExecuteFieldAction(&gameUuid, &fieldUuid, fieldStatus)
+	status, err := gameService.ExecuteFieldAction(&gameUuid, &fieldUuid, fieldStatus)
 
+	assert.Nil(t, status)
 	assert.Equal(t, http.StatusBadRequest, err.StatusCode)
 	assert.Equal(t, "game "+gameUuid.String()+" is finished", err.Message)
 }
@@ -344,8 +348,9 @@ func Test_gamesServiceImpl_ExecuteFieldAction_FindByIdAndGameId_error(t *testing
 
 	fieldStatus := models.FieldStatusShown
 
-	err := gameService.ExecuteFieldAction(&gameUuid, &fieldUuid, fieldStatus)
+	status, err := gameService.ExecuteFieldAction(&gameUuid, &fieldUuid, fieldStatus)
 
+	assert.Nil(t, status)
 	assert.Equal(t, errExpected, err)
 }
 
@@ -365,8 +370,9 @@ func Test_gamesServiceImpl_ExecuteFieldAction_setStatus_error(t *testing.T) {
 
 	fieldStatus := models.FieldStatusShown
 
-	err := gameService.ExecuteFieldAction(&gameUuid, &fieldUuid, fieldStatus)
+	status, err := gameService.ExecuteFieldAction(&gameUuid, &fieldUuid, fieldStatus)
 
+	assert.Nil(t, status)
 	assert.Equal(t, http.StatusBadRequest, err.StatusCode)
 }
 
@@ -388,8 +394,9 @@ func Test_gamesServiceImpl_ExecuteFieldAction_fieldUpdate_error(t *testing.T) {
 
 	fieldStatus := models.FieldStatusShown
 
-	err := gameService.ExecuteFieldAction(&gameUuid, &fieldUuid, fieldStatus)
+	status, err := gameService.ExecuteFieldAction(&gameUuid, &fieldUuid, fieldStatus)
 
+	assert.Nil(t, status)
 	assert.Equal(t, errExpected, err)
 }
 
@@ -413,8 +420,9 @@ func Test_gamesServiceImpl_ExecuteFieldAction_flagged_error(t *testing.T) {
 
 	fieldStatus := models.FieldStatusFlagged
 
-	err := gameService.ExecuteFieldAction(&gameUuid, &fieldUuid, fieldStatus)
+	status, err := gameService.ExecuteFieldAction(&gameUuid, &fieldUuid, fieldStatus)
 
+	assert.Nil(t, status)
 	assert.Equal(t, errExpected, err)
 }
 
@@ -437,8 +445,9 @@ func Test_gamesServiceImpl_ExecuteFieldAction_game_update_error(t *testing.T) {
 
 	fieldStatus := models.FieldStatusShown
 
-	err := gameService.ExecuteFieldAction(&gameUuid, &fieldUuid, fieldStatus)
+	status, err := gameService.ExecuteFieldAction(&gameUuid, &fieldUuid, fieldStatus)
 
+	assert.Nil(t, status)
 	assert.Equal(t, errExpected, err)
 }
 

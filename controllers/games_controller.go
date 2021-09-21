@@ -7,6 +7,7 @@ import (
 	"minesweeper-api/models"
 	"minesweeper-api/services"
 	"net/http"
+	"strings"
 )
 
 type GamesController interface {
@@ -72,12 +73,14 @@ func (g gamesControllerImpl) ExecuteFieldAction(context *gin.Context) {
 	gameUuid := uuid.MustParse(context.Param("game-uuid"))
 	fieldUuid := uuid.MustParse(context.Param("field-uuid"))
 
-	if err := g.gamesService.ExecuteFieldAction(&gameUuid, &fieldUuid, status); err != nil {
+	gameStatus, err := g.gamesService.ExecuteFieldAction(&gameUuid, &fieldUuid, status)
+	if err != nil {
 		context.JSON(err.StatusCode, err)
 		return
 	}
 
 	context.JSON(http.StatusAccepted, gin.H{
-		"message": "field " + status,
+		"game_status": gameStatus,
+		"message":     "field " + strings.ToLower(string(status)),
 	})
 }
