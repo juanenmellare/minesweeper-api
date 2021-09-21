@@ -43,19 +43,28 @@ func (_m *GamesService) Create(settings *models.Settings) (*models.Game, *errors
 }
 
 // ExecuteFieldAction provides a mock function with given fields: gameUuid, fieldUuid, fieldStatus
-func (_m *GamesService) ExecuteFieldAction(gameUuid *uuid.UUID, fieldUuid *uuid.UUID, fieldStatus models.FieldStatus) *errors.ApiError {
+func (_m *GamesService) ExecuteFieldAction(gameUuid *uuid.UUID, fieldUuid *uuid.UUID, fieldStatus models.FieldStatus) (*models.GameStatus, *errors.ApiError) {
 	ret := _m.Called(gameUuid, fieldUuid, fieldStatus)
 
-	var r0 *errors.ApiError
-	if rf, ok := ret.Get(0).(func(*uuid.UUID, *uuid.UUID, models.FieldStatus) *errors.ApiError); ok {
+	var r0 *models.GameStatus
+	if rf, ok := ret.Get(0).(func(*uuid.UUID, *uuid.UUID, models.FieldStatus) *models.GameStatus); ok {
 		r0 = rf(gameUuid, fieldUuid, fieldStatus)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*errors.ApiError)
+			r0 = ret.Get(0).(*models.GameStatus)
 		}
 	}
 
-	return r0
+	var r1 *errors.ApiError
+	if rf, ok := ret.Get(1).(func(*uuid.UUID, *uuid.UUID, models.FieldStatus) *errors.ApiError); ok {
+		r1 = rf(gameUuid, fieldUuid, fieldStatus)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*errors.ApiError)
+		}
+	}
+
+	return r0, r1
 }
 
 // FindById provides a mock function with given fields: _a0, hasToPreload

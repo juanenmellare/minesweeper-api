@@ -12,7 +12,8 @@ import (
 type GamesService interface {
 	Create(settings *models.Settings) (*models.Game, *errors.ApiError)
 	FindById(uuid *uuid.UUID, hasToPreload bool) (*models.Game, *errors.ApiError)
-	ExecuteFieldAction(gameUuid *uuid.UUID, fieldUuid *uuid.UUID, fieldStatus models.FieldStatus) *errors.ApiError
+	ExecuteFieldAction(gameUuid *uuid.UUID, fieldUuid *uuid.UUID,
+		fieldStatus models.FieldStatus) (*models.GameStatus, *errors.ApiError)
 }
 
 type gamesServiceImpl struct {
@@ -121,7 +122,27 @@ func (g gamesServiceImpl) Create(settings *models.Settings) (*models.Game, *erro
 		return nil, err
 	}
 
+	hideMinefieldValues(game)
+
 	return game, nil
+}
+
+func hideMinefieldValues(game *models.Game) {
+	minefieldLength := len(*game.Minefield)
+	hiddenMinefield := make([]models.Field, minefieldLength)
+
+	if game.Status == models.GameStatusInProgress {
+		for index := 0; index < minefieldLength; index++ {
+			field := (*game.Minefield)[index]
+			if field.Status != models.FieldStatusShown {
+				field.HideValue()
+			}
+			hiddenMinefield[index] = field
+		}
+
+	}
+
+	game.Minefield = &hiddenMinefield
 }
 
 func (g gamesServiceImpl) FindById(uuid *uuid.UUID, hasToPreload bool) (*models.Game, *errors.ApiError) {
@@ -133,6 +154,8 @@ func (g gamesServiceImpl) FindById(uuid *uuid.UUID, hasToPreload bool) (*models.
 	if game.EndedAt == nil {
 		game.Duration = int(time.Now().Sub(game.StartedAt).Seconds())
 	}
+
+	hideMinefieldValues(game)
 
 	return game, nil
 }
@@ -229,32 +252,32 @@ func (g gamesServiceImpl) validateIfHasFinished(fieldStatus models.FieldStatus, 
 }
 
 func (g gamesServiceImpl) ExecuteFieldAction(gameUuid *uuid.UUID, fieldUuid *uuid.UUID,
-	fieldStatus models.FieldStatus) *errors.ApiError {
+	fieldStatus models.FieldStatus) (*models.GameStatus, *errors.ApiError) {
 	game, err := g.gamesRepository.FindById(gameUuid, false)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if game.Status != models.GameStatusInProgress {
-		return errors.NewBadRequestApiError(errors.NewError("game " + game.ID.String() + " is finished"))
+		return nil, errors.NewBadRequestApiError(errors.NewError("game " + game.ID.String() + " is finished"))
 	}
 
 	field, err := g.fieldsRepository.FindByIdAndGameId(fieldUuid, gameUuid)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := field.SetStatus(fieldStatus); err != nil {
-		return errors.NewBadRequestApiError(err)
+		return nil, errors.NewBadRequestApiError(err)
 	}
 
 	if err = g.fieldsRepository.Update(field); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err = g.validateIfHasFinished(fieldStatus, field, game); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &game.Status, nil
 }

@@ -106,3 +106,11 @@ func TestField_SetStatus_error(t *testing.T) {
 
 	assert.NotNil(t, err)
 }
+
+func TestField_HideValue(t *testing.T) {
+	field := Field{Value: &MineString}
+
+	field.HideValue()
+
+	assert.Equal(t, "*", *field.Value)
+}
