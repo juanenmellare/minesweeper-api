@@ -47,7 +47,7 @@ make tests
 ```
 
 ```bash
-make tests-report // Create a html report of coverage in the root project folder.
+make tests-report    # Create a html report of coverage in the root project folder.
 ```
 
 ### Run API with Postgres (docker + live reload)
