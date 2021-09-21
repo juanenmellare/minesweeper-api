@@ -15,7 +15,7 @@ type Settings struct {
 
 func buildSettingsMinMaxError(fieldName string, minValue, maxValue int) *errors.ApiError {
 	err := errors.NewError("minefield " + fieldName + " must be bigger than " + strconv.Itoa(minValue) +
-		" and less than "+ strconv.Itoa(maxValue))
+		" and less than " + strconv.Itoa(maxValue))
 	return errors.NewBadRequestApiError(err)
 }
 
@@ -28,13 +28,13 @@ func (s Settings) Validate() *errors.ApiError {
 
 	const minHeight int = 3
 	const maxHeight int = 16
-	if minHeight > s.Height || maxHeight < s.Height{
+	if minHeight > s.Height || maxHeight < s.Height {
 		return buildSettingsMinMaxError("height", minHeight, maxHeight)
 	}
 
 	const minMinesQuantity int = 1
 	maxMinesQuantity := (s.Height * s.Width) - 1
-	if minMinesQuantity > s.MinesQuantity || maxMinesQuantity < s.MinesQuantity{
+	if minMinesQuantity > s.MinesQuantity || maxMinesQuantity < s.MinesQuantity {
 		return buildSettingsMinMaxError("mines quantity", minMinesQuantity, maxMinesQuantity)
 	}
 

@@ -169,9 +169,8 @@ func Test_gamesServiceImpl_FindById_err(t *testing.T) {
 	assert.Nil(t, game)
 }
 
-
 func Test_executeAfterShow(t *testing.T) {
-	settings := models.Settings{Height:9, Width:9, MinesQuantity: 3}
+	settings := models.Settings{Height: 9, Width: 9, MinesQuantity: 3}
 	gameUuid := uuid.New()
 	game := &models.Game{ID: gameUuid, Settings: settings}
 	field := &models.Field{Status: models.FieldStatusShown}
@@ -188,7 +187,7 @@ func Test_executeAfterShow(t *testing.T) {
 }
 
 func Test_executeAfterShow_FindByGameId_error(t *testing.T) {
-	settings := models.Settings{Height:9, Width:9, MinesQuantity: 3}
+	settings := models.Settings{Height: 9, Width: 9, MinesQuantity: 3}
 	gameUuid := uuid.New()
 	game := &models.Game{ID: gameUuid, Settings: settings}
 	field := &models.Field{Status: models.FieldStatusShown}
@@ -326,7 +325,7 @@ func Test_gamesServiceImpl_ExecuteFieldAction_FindById_notInProgress_error(t *te
 	err := gameService.ExecuteFieldAction(&gameUuid, &fieldUuid, fieldStatus)
 
 	assert.Equal(t, http.StatusBadRequest, err.StatusCode)
-	assert.Equal(t, "game " + gameUuid.String() + " is finished", err.Message)
+	assert.Equal(t, "game "+gameUuid.String()+" is finished", err.Message)
 }
 
 func Test_gamesServiceImpl_ExecuteFieldAction_FindByIdAndGameId_error(t *testing.T) {
@@ -470,7 +469,7 @@ func Test_showAdjacentFields(t *testing.T) {
 
 	gamesService := gamesServiceImpl{nil, fieldsRepositoryMock}
 
-	showAdjacentFields(gamesService ,initialField, &minefield, settingsMock)
+	showAdjacentFields(gamesService, initialField, &minefield, settingsMock)
 
 	assert.Equal(t, models.FieldStatusShown, minefield[1][0].Status)
 	assert.Equal(t, models.FieldStatusShown, minefield[2][0].Status)

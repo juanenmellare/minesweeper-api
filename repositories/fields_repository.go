@@ -67,8 +67,8 @@ func (f fieldsRepositoryImpl) findByCriteria(criteria map[string]interface{}) (*
 func (f fieldsRepositoryImpl) FindMineFieldsFlaggedByGame(gameUuid *uuid.UUID) (*[]models.Field, *errors.ApiError) {
 	criteria := map[string]interface{}{
 		"game_id": *gameUuid,
-		"value": models.MineString,
-		"status": models.FieldStatusFlagged,
+		"value":   models.MineString,
+		"status":  models.FieldStatusFlagged,
 	}
 
 	return f.findByCriteria(criteria)
@@ -79,4 +79,3 @@ func (f fieldsRepositoryImpl) FindByGameId(gameUuid *uuid.UUID) (*[]models.Field
 
 	return f.findByCriteria(criteria)
 }
-

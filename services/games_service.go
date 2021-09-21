@@ -147,7 +147,6 @@ func fillMinefield(fields *[]models.Field, settings *models.Settings) *[][]model
 		minefield[field.PositionY][field.PositionX] = field
 	}
 
-
 	return &minefield
 }
 
@@ -202,9 +201,8 @@ func executeAfterFlag(g gamesServiceImpl, _ *models.Field, game *models.Game) (*
 	return nil, nil
 }
 
-var candidateFinishActionStrategyMap =
-	map[models.FieldStatus] func(g gamesServiceImpl, field *models.Field,
-		game *models.Game) (*models.GameStatus, *errors.ApiError){
+var candidateFinishActionStrategyMap = map[models.FieldStatus]func(g gamesServiceImpl, field *models.Field,
+	game *models.Game) (*models.GameStatus, *errors.ApiError){
 	models.FieldStatusShown:   executeAfterShow,
 	models.FieldStatusFlagged: executeAfterFlag,
 }
@@ -221,7 +219,7 @@ func (g gamesServiceImpl) validateIfHasFinished(fieldStatus models.FieldStatus, 
 			now := time.Now()
 			game.EndedAt = &now
 			game.Duration = int(game.EndedAt.Sub(game.StartedAt).Seconds())
-			if err = g.gamesRepository.Update(game); err!= nil {
+			if err = g.gamesRepository.Update(game); err != nil {
 				return err
 			}
 		}
