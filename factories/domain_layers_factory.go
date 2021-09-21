@@ -2,6 +2,8 @@ package factories
 
 import (
 	"minesweeper-api/controllers"
+	"minesweeper-api/databases"
+	"minesweeper-api/repositories"
 	"minesweeper-api/services"
 )
 
@@ -15,10 +17,10 @@ type domainLayersFactoryImpl struct {
 	gamesController        controllers.GamesController
 }
 
-func NewDomainLayersFactory() DomainLayersFactory {
+func NewDomainLayersFactory(database databases.RelationalDatabase) DomainLayersFactory {
 	return &domainLayersFactoryImpl{
 		healthChecksController: createHealthChecksController(),
-		gamesController:        createGamesController(),
+		gamesController:        createGamesController(database),
 	}
 }
 
@@ -26,8 +28,12 @@ func createHealthChecksController() controllers.HealthChecksController {
 	return controllers.NewHealthChecksController()
 }
 
-func createGamesController() controllers.GamesController {
-	gamesService := services.NewGamesService()
+func createGamesController(database databases.RelationalDatabase) controllers.GamesController {
+	gamesRepository := repositories.NewGamesRepository(database)
+	fieldsRepository := repositories.NewFieldsRepository(database)
+
+	gamesService := services.NewGamesService(gamesRepository, fieldsRepository)
+
 	gamesController := controllers.NewGamesController(gamesService)
 
 	return gamesController

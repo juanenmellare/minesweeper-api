@@ -1,9 +1,12 @@
 module minesweeper-api
 
+// +heroku goVersion 1.16
 go 1.16
 
 require (
 	github.com/gin-gonic/gin v1.7.4
-	github.com/stretchr/testify v1.4.0
-	github.com/vektra/mockery/v2 v2.9.4 // indirect
+	github.com/google/uuid v1.3.0
+	github.com/stretchr/testify v1.7.0
+	gorm.io/driver/postgres v1.1.1
+	gorm.io/gorm v1.21.15
 )

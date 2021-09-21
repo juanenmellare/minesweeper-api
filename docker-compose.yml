@@ -1,0 +1,33 @@
+version: "3.7"
+services:
+  minesweeper-api:
+    build:
+      context: .
+      dockerfile: .dev_environment/docker-images/dev.Dockerfile
+    volumes:
+      - ./:/go/src/minesweeper-api
+    links:
+      - dbpostgres
+    environment:
+      - SCOPE=local
+      - PORT=${PORT}
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASS=${DATABASE_PASS}
+    ports:
+      - "8080:8080"
+  
+  dbpostgres:
+    build:
+      context: .
+      dockerfile: .dev_environment/docker-images/postgres.Dockerfile
+    volumes:
+      - .dev_environment/docker-images/postgres-data:/var/lib/postgresql
+    environment:
+      - POSTGRES_DB=${DATABASE_NAME}
+      - POSTGRES_USER=${DATABASE_USER}
+      - POSTGRES_PASSWORD=${DATABASE_PASS}
+    ports:
+      - "5432:5432"

@@ -46,3 +46,13 @@ func TestNewError(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Equal(t, message, err.Error())
 }
+
+func TestNewNotFoundError(t *testing.T) {
+	err := errors.New("panic")
+
+	apiError := NewNotFoundError(err)
+
+	assert.Equal(t, "not found", apiError.Status)
+	assert.Equal(t, http.StatusNotFound, apiError.StatusCode)
+	assert.Equal(t, err.Error(), apiError.Message)
+}

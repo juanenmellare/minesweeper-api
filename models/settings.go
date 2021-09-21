@@ -1,34 +1,41 @@
 package models
 
 import (
+	"github.com/google/uuid"
 	"minesweeper-api/errors"
 	"strconv"
 )
 
 type Settings struct {
-	Width         int `json:"width"`
-	Height        int `json:"height"`
-	BombsQuantity int `json:"bombsQuantity"`
+	ID            uuid.UUID `json:"-" gorm:"type:uuid;default:uuid_generate_v4()"`
+	Width         int       `json:"width"`
+	Height        int       `json:"height"`
+	MinesQuantity int       `json:"minesQuantity"`
 }
 
-func buildSettingsMinError(fieldName string, minValue int) *errors.ApiError {
-	err := errors.NewError("minefield " + fieldName + " must not be less than " + strconv.Itoa(minValue))
+func buildSettingsMinMaxError(fieldName string, minValue, maxValue int) *errors.ApiError {
+	err := errors.NewError("minefield " + fieldName + " must be bigger than " + strconv.Itoa(minValue) +
+		" and less than " + strconv.Itoa(maxValue))
 	return errors.NewBadRequestApiError(err)
 }
 
 func (s Settings) Validate() *errors.ApiError {
 	const minWidth int = 3
-	const minHeight int = 3
-	const minBombsQuantity int = 1
+	const maxWidth int = 30
+	if minWidth > s.Width || maxWidth < s.Width {
+		return buildSettingsMinMaxError("width", minWidth, maxWidth)
+	}
 
-	if minWidth > s.Width {
-		return buildSettingsMinError("width", minHeight)
+	const minHeight int = 3
+	const maxHeight int = 16
+	if minHeight > s.Height || maxHeight < s.Height {
+		return buildSettingsMinMaxError("height", minHeight, maxHeight)
 	}
-	if minHeight > s.Height {
-		return buildSettingsMinError("height", minHeight)
-	}
-	if minBombsQuantity > s.BombsQuantity {
-		return buildSettingsMinError("bombs quantity", minBombsQuantity)
+
+	const minMinesQuantity int = 1
+	maxMinesQuantity := (s.Height * s.Width) - 1
+	if minMinesQuantity > s.MinesQuantity || maxMinesQuantity < s.MinesQuantity {
+		return buildSettingsMinMaxError("mines quantity", minMinesQuantity, maxMinesQuantity)
 	}
 
 	return nil
