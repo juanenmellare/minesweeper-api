@@ -8,10 +8,10 @@ This project tries to adapt the game to an API RESTful version.
 [https://juanenmellare-minesweeper-api.herokuapp.com](https://juanenmellare-minesweeper-api.herokuapp.com)
 
 
-**HealtCheck:** 
+**Healthcheck:** 
 | Method      | Path        | Description |
 | ----------- | ----------- | ------------|
-| GET         | /ping       | Should return 'pong' text is the application is ok |
+| GET         | /ping       | Should return 'pong' text if the application is ok |
 
 **Game:** 
 | Ref | Method      | Path                                       | Description             | Params & Body                                                       |
@@ -32,8 +32,18 @@ This project tries to adapt the game to an API RESTful version.
 - Is the game is over the timer will stop and you won't be able to execute any other action.
 
 
-## Game JSON
+## JSONs
 
+Create Game Request Body (route 1)
+```json
+{
+    "height": 3,
+    "width": 3,
+    "minesQuantity": 1
+}
+```
+
+Get Game Response (route 2)
 ```json
 {
     "id": "f7932250-b312-45ac-b936-8768f485632a",
