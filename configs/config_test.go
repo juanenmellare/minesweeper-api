@@ -8,6 +8,7 @@ import (
 )
 
 func setMockEnvs() {
+	_ = os.Setenv("PORT", "8080")
 	_ = os.Setenv("DATABASE_HOST", "FOO-HOST")
 	_ = os.Setenv("DATABASE_USER", "FOO-USER")
 	_ = os.Setenv("DATABASE_PASS", "FOO-PASS")
@@ -40,8 +41,16 @@ func assertEnvIsMissing(t *testing.T, env string) {
 	assertPanicMessage(t, NewConfig, env+" doesn't exist.")
 }
 
+func TestConfigImpl_GetPort(t *testing.T) {
+	assert.Equal(t, "8080", config.GetPort())
+}
+
+func TestConfigImpl_NewConfig_missing_PORT(t *testing.T) {
+	assertEnvIsMissing(t, "PORT")
+}
+
 func TestConfigImpl_GetDatabaseHost(t *testing.T) {
-	assert.Equal(t, config.GetDatabaseHost(), "FOO-HOST")
+	assert.Equal(t, "FOO-HOST", config.GetDatabaseHost())
 }
 
 func TestConfigImpl_NewConfig_missing_DATABASE_HOST(t *testing.T) {
@@ -49,7 +58,7 @@ func TestConfigImpl_NewConfig_missing_DATABASE_HOST(t *testing.T) {
 }
 
 func TestConfigImpl_GetDatabaseUser(t *testing.T) {
-	assert.Equal(t, config.GetDatabaseUser(), "FOO-USER")
+	assert.Equal(t, "FOO-USER", config.GetDatabaseUser())
 }
 
 func TestConfigImpl_NewConfig_missing_DATABASE_USER(t *testing.T) {
@@ -57,7 +66,7 @@ func TestConfigImpl_NewConfig_missing_DATABASE_USER(t *testing.T) {
 }
 
 func TestConfigImpl_GetDatabasePass(t *testing.T) {
-	assert.Equal(t, config.GetDatabasePass(), "FOO-PASS")
+	assert.Equal(t, "FOO-PASS", config.GetDatabasePass())
 }
 
 func TestConfigImpl_NewConfig_missing_DATABASE_PASS(t *testing.T) {
@@ -65,7 +74,7 @@ func TestConfigImpl_NewConfig_missing_DATABASE_PASS(t *testing.T) {
 }
 
 func TestConfigImpl_GetDatabasePort(t *testing.T) {
-	assert.Equal(t, config.GetDatabasePort(), "FOO-PORT")
+	assert.Equal(t, "FOO-PORT", config.GetDatabasePort())
 }
 
 func TestConfigImpl_NewConfig_missing_DATABASE_PORT(t *testing.T) {
@@ -73,7 +82,7 @@ func TestConfigImpl_NewConfig_missing_DATABASE_PORT(t *testing.T) {
 }
 
 func TestConfigImpl_GetDatabaseName(t *testing.T) {
-	assert.Equal(t, config.GetDatabaseName(), "FOO-NAME")
+	assert.Equal(t, "FOO-NAME", config.GetDatabaseName())
 }
 
 func TestConfigImpl_NewConfig_missing_DATABASE_NAME(t *testing.T) {

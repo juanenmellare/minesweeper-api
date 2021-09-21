@@ -6,15 +6,16 @@ import (
 	"strconv"
 )
 
-var mineString = "MINE"
+var MineString = "MINE"
 
 type Field struct {
-	ID        uuid.UUID `json:"-" gorm:"type:uuid;default:uuid_generate_v4()"`
-	Value     *string   `json:"value"`
-	PositionY int       `json:"positionY"`
-	PositionX int       `json:"positionX"`
-	GameId    uuid.UUID `json:"-"`
-	Game      Game      `json:"-" gorm:"foreignKey:GameId;references:id"`
+	ID        uuid.UUID   `json:"id" gorm:"type:uuid;default:uuid_generate_v4()"`
+	Value     *string     `json:"value"`
+	Status    FieldStatus `json:"status"`
+	PositionY int         `json:"positionY" gorm:"index:idx_game_position,priority:3"`
+	PositionX int         `json:"positionX" gorm:"index:idx_game_position,priority:2"`
+	GameId    uuid.UUID   `json:"-" gorm:"index:idx_game_position,priority:1;column:game_id"`
+	Game      Game        `json:"-" gorm:"foreignKey:GameId;references:id"`
 }
 
 func (f *Field) setValue(value string) {
@@ -32,11 +33,14 @@ func (f *Field) IncrementHintValue() {
 }
 
 func (f *Field) SetMine() {
-	f.setValue(mineString)
+	f.setValue(MineString)
 }
 
 func (f *Field) IsMine() bool {
-	return *f.Value == mineString
+	if f.IsNil() {
+		return false
+	}
+	return *f.Value == MineString
 }
 
 func (f *Field) IsNil() bool {
@@ -46,4 +50,21 @@ func (f *Field) IsNil() bool {
 func (f *Field) SetPosition(y, x int) {
 	f.PositionY = y
 	f.PositionX = x
+}
+
+func (f *Field) SetInitialStatus() {
+	f.Status = FieldStatusHidden
+}
+
+func (f *Field) Show() {
+	f.Status = FieldStatusShown
+}
+
+func (f *Field) SetStatus(candidateStatus FieldStatus) error {
+	if err := ValidateFieldStatusTransition(f.Status, candidateStatus); err != nil {
+		return err
+	}
+	f.Status = candidateStatus
+
+	return nil
 }

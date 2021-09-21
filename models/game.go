@@ -8,6 +8,8 @@ import (
 type Game struct {
 	ID         uuid.UUID  `json:"id" gorm:"type:uuid;default:uuid_generate_v4()"`
 	StartedAt  time.Time  `json:"startedAt"`
+	EndedAt    *time.Time `json:"endedAt"`
+	Duration   int        `json:"duration"`
 	Settings   Settings   `json:"settings" gorm:"foreignKey:id"`
 	SettingsID uuid.UUID  `json:"-" gorm:"foreignKey:ID;references:SettingsID"`
 	Minefield  *[]Field   `json:"minefield" gorm:"GameId"`

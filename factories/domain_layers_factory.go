@@ -30,7 +30,10 @@ func createHealthChecksController() controllers.HealthChecksController {
 
 func createGamesController(database databases.RelationalDatabase) controllers.GamesController {
 	gamesRepository := repositories.NewGamesRepository(database)
-	gamesService := services.NewGamesService(gamesRepository)
+	fieldsRepository := repositories.NewFieldsRepository(database)
+
+	gamesService := services.NewGamesService(gamesRepository, fieldsRepository)
+
 	gamesController := controllers.NewGamesController(gamesService)
 
 	return gamesController

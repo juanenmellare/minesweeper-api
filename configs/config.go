@@ -6,6 +6,7 @@ import (
 )
 
 type Config interface {
+	GetPort() string
 	GetDatabaseHost() string
 	GetDatabaseName() string
 	GetDatabasePort() string
@@ -14,6 +15,7 @@ type Config interface {
 }
 
 type ConfigImpl struct {
+	port         string
 	databaseHost string
 	databaseName string
 	databasePort string
@@ -23,6 +25,7 @@ type ConfigImpl struct {
 
 func NewConfig() Config {
 	return &ConfigImpl{
+		port:         getValue("PORT"),
 		databaseHost: getValue("DATABASE_HOST"),
 		databaseName: getValue("DATABASE_NAME"),
 		databasePort: getValue("DATABASE_PORT"),
@@ -38,6 +41,10 @@ func getValue(key string) string {
 	}
 
 	return value
+}
+
+func (c ConfigImpl) GetPort() string {
+	return c.port
 }
 
 func (c ConfigImpl) GetDatabaseHost() string {
