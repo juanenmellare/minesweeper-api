@@ -9,7 +9,6 @@ import (
 	"time"
 )
 
-//go:generate mockery --name GamesService --output mocks
 type GamesService interface {
 	Create(settings *models.Settings) (*models.Game, *errors.ApiError)
 	FindById(uuid *uuid.UUID, hasToPreload bool) (*models.Game, *errors.ApiError)
@@ -33,17 +32,30 @@ func fillMinefieldWithMines(minefield *[][]models.Field, settings *models.Settin
 	bombsCounter := settings.MinesQuantity
 	minesPositions := make([]models.Position, bombsCounter)
 	for ok := true; ok; ok = bombsCounter != 0 {
-		yPosition := rand.Intn(settings.Height)
-		xPosition := rand.Intn(settings.Width)
+		positionY := rand.Intn(settings.Height)
+		positionX := rand.Intn(settings.Width)
 
-		if field := &(*minefield)[yPosition][xPosition]; field.IsNil() {
+		if field := &(*minefield)[positionY][positionX]; field.IsNil() {
 			field.SetMine()
-			minesPositions[bombsCounter-1] = models.Position{Y: yPosition, X: xPosition}
+			minesPositions[bombsCounter-1] = models.Position{Y: positionY, X: positionX}
 			bombsCounter--
 		}
 	}
 
 	return minesPositions
+}
+
+func calculateHintValue(field *models.Field) {
+	if field.IsNil() {
+		field.SetInitialHintValue()
+	} else if !field.IsMine() {
+		field.IncrementHintValue()
+	}
+}
+
+func isPositionInsideMinefield(settings *models.Settings, candidatePositionY, candidatePositionX int) bool {
+	return candidatePositionY < settings.Height && candidatePositionY != -1 &&
+		candidatePositionX < settings.Width && candidatePositionX != -1
 }
 
 var borderingPositions = []models.Position{
@@ -57,17 +69,9 @@ func fillMinefieldWithHints(minefield *[][]models.Field, settings *models.Settin
 			candidatePositionY := position.Y + borderingPosition.Y
 			candidatePositionX := position.X + borderingPosition.X
 
-			isCandidateInsideMinefield :=
-				candidatePositionY < settings.Height && candidatePositionY != -1 &&
-					candidatePositionX < settings.Width && candidatePositionX != -1
-
-			if isCandidateInsideMinefield {
+			if isPositionInsideMinefield(settings, candidatePositionY, candidatePositionX) {
 				field := &(*minefield)[candidatePositionY][candidatePositionX]
-				if field.IsNil() {
-					field.SetInitialHintValue()
-				} else if !field.IsMine() {
-					field.IncrementHintValue()
-				}
+				calculateHintValue(field)
 			}
 		}
 	}
@@ -80,7 +84,7 @@ func fillFieldsPositionsAndFlat(settings *models.Settings, minefield *[][]models
 	for y := 0; y < settings.Height; y++ {
 		for x := 0; x < settings.Width; x++ {
 			field := &(*minefield)[y][x]
-			field.SetInitialValue()
+			field.SetInitialStatus()
 			field.SetPosition(y, x)
 			minefieldSlice[index] = *field
 			index++
@@ -133,37 +137,59 @@ func (g gamesServiceImpl) FindById(uuid *uuid.UUID, hasToPreload bool) (*models.
 	return game, nil
 }
 
-func fillMinefield(fields []models.Field, height, width int) [][]models.Field {
-	minefield := make([][]models.Field, height)
+func fillMinefield(fields *[]models.Field, settings *models.Settings) *[][]models.Field {
+	minefield := make([][]models.Field, settings.Height)
 	for index := range minefield {
-		minefield[index] = make([]models.Field, width)
+		minefield[index] = make([]models.Field, settings.Width)
 	}
 
-	for _, field := range fields {
+	for _, field := range *fields {
 		minefield[field.PositionY][field.PositionX] = field
 	}
 
-	return minefield
+
+	return &minefield
 }
 
-func showAdjacentFields(field models.Field, minefield [][]models.Field) {
+func showAdjacentFields(g gamesServiceImpl, field *models.Field, minefield *[][]models.Field,
+	settings *models.Settings) {
+	for _, position := range borderingPositions {
+		candidatePositionY := position.Y + field.PositionY
+		candidatePositionX := position.X + field.PositionX
 
+		if isPositionInsideMinefield(settings, candidatePositionY, candidatePositionX) {
+			candidateField := &(*minefield)[candidatePositionY][candidatePositionX]
+			if !candidateField.IsMine() && candidateField.Status == models.FieldStatusHidden {
+				candidateField.Show()
+				g.fieldsRepository.Update(field)
+				showAdjacentFields(g, candidateField, minefield, settings)
+			}
+		}
+	}
 
 }
 
-
-func hasLost(field *models.Field, _ *models.Game, _ repositories.FieldsRepository) (*models.GameStatus, *errors.ApiError) {
-	if !field.IsNil() && field.IsMine() {
+func executeAfterShow(g gamesServiceImpl, field *models.Field, game *models.Game) (*models.GameStatus, *errors.ApiError) {
+	if field.IsMine() {
 		gameStatus := models.GameStatusLost
 		return &gameStatus, nil
+	}
+
+	if field.IsNil() {
+		fields, err := g.fieldsRepository.FindByGameId(&game.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		minefield := fillMinefield(fields, &game.Settings)
+		showAdjacentFields(g, field, minefield, &game.Settings)
 	}
 
 	return nil, nil
 }
 
-func hasWon(_ *models.Field, game *models.Game,
-	fieldsRepository repositories.FieldsRepository) (*models.GameStatus, *errors.ApiError) {
-	flaggedMines, err := fieldsRepository.FindMineFieldsFlaggedByGame(&game.ID)
+func executeAfterFlag(g gamesServiceImpl, _ *models.Field, game *models.Game) (*models.GameStatus, *errors.ApiError) {
+	flaggedMines, err := g.fieldsRepository.FindMineFieldsFlaggedByGame(&game.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -176,17 +202,17 @@ func hasWon(_ *models.Field, game *models.Game,
 	return nil, nil
 }
 
-var candidateFinishActionStrategyMap = map[models.FieldStatus]func(
-	field *models.Field, game *models.Game,
-	fieldsRepository repositories.FieldsRepository) (*models.GameStatus, *errors.ApiError){
-	models.FieldStatusShown:   hasLost,
-	models.FieldStatusFlagged: hasWon,
+var candidateFinishActionStrategyMap =
+	map[models.FieldStatus] func(g gamesServiceImpl, field *models.Field,
+		game *models.Game) (*models.GameStatus, *errors.ApiError){
+	models.FieldStatusShown:   executeAfterShow,
+	models.FieldStatusFlagged: executeAfterFlag,
 }
 
 func (g gamesServiceImpl) validateIfHasFinished(fieldStatus models.FieldStatus, field *models.Field,
 	game *models.Game) *errors.ApiError {
-	if hasGameFinished, ok := candidateFinishActionStrategyMap[fieldStatus]; ok {
-		gameStatus, err := hasGameFinished(field, game, g.fieldsRepository)
+	if afterAction, ok := candidateFinishActionStrategyMap[fieldStatus]; ok {
+		gameStatus, err := afterAction(g, field, game)
 		if err != nil {
 			return err
 		}

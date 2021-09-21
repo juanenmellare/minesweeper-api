@@ -9,10 +9,12 @@ import (
 	"net/http"
 )
 
+//go:generate mockery --name FieldsRepository --output mocks
 type FieldsRepository interface {
 	FindByIdAndGameId(uuid *uuid.UUID, gameUuid *uuid.UUID) (*models.Field, *errors.ApiError)
 	Update(field *models.Field) *errors.ApiError
 	FindMineFieldsFlaggedByGame(gameUuid *uuid.UUID) (*[]models.Field, *errors.ApiError)
+	FindByGameId(gameUuid *uuid.UUID) (*[]models.Field, *errors.ApiError)
 }
 
 type fieldsRepositoryImpl struct {
@@ -50,13 +52,10 @@ func (f fieldsRepositoryImpl) Update(field *models.Field) *errors.ApiError {
 	return nil
 }
 
-func (f fieldsRepositoryImpl) FindMineFieldsFlaggedByGame(gameUuid *uuid.UUID) (*[]models.Field, *errors.ApiError) {
+func (f fieldsRepositoryImpl) findByCriteria(criteria map[string]interface{}) (*[]models.Field, *errors.ApiError) {
 	var fields []models.Field
 
-	tx := f.database.Get().
-		Where(map[string]interface{}{
-			"game_id": *gameUuid, "value": models.MineString, "status": models.FieldStatusFlagged,
-		}).Find(&fields)
+	tx := f.database.Get().Where(criteria).Find(&fields)
 	if err := helpers.ValidateDatabaseTxError(tx.Error, ""); err != nil &&
 		err.StatusCode != http.StatusNotFound {
 		return nil, err
@@ -64,3 +63,20 @@ func (f fieldsRepositoryImpl) FindMineFieldsFlaggedByGame(gameUuid *uuid.UUID) (
 
 	return &fields, nil
 }
+
+func (f fieldsRepositoryImpl) FindMineFieldsFlaggedByGame(gameUuid *uuid.UUID) (*[]models.Field, *errors.ApiError) {
+	criteria := map[string]interface{}{
+		"game_id": *gameUuid,
+		"value": models.MineString,
+		"status": models.FieldStatusFlagged,
+	}
+
+	return f.findByCriteria(criteria)
+}
+
+func (f fieldsRepositoryImpl) FindByGameId(gameUuid *uuid.UUID) (*[]models.Field, *errors.ApiError) {
+	criteria := map[string]interface{}{"game_id": *gameUuid}
+
+	return f.findByCriteria(criteria)
+}
+

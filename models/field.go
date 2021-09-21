@@ -37,6 +37,9 @@ func (f *Field) SetMine() {
 }
 
 func (f *Field) IsMine() bool {
+	if f.IsNil() {
+		return false
+	}
 	return *f.Value == MineString
 }
 
@@ -49,8 +52,12 @@ func (f *Field) SetPosition(y, x int) {
 	f.PositionX = x
 }
 
-func (f *Field) SetInitialValue() {
+func (f *Field) SetInitialStatus() {
 	f.Status = FieldStatusHidden
+}
+
+func (f *Field) Show() {
+	f.Status = FieldStatusShown
 }
 
 func (f *Field) SetStatus(candidateStatus FieldStatus) error {

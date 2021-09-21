@@ -10,6 +10,7 @@ services:
       - dbpostgres
     environment:
       - SCOPE=local
+      - PORT=${PORT}
       - DATABASE_HOST=${DATABASE_HOST}
       - DATABASE_NAME=${DATABASE_NAME}
       - DATABASE_PORT=${DATABASE_PORT}

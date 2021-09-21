@@ -169,66 +169,101 @@ func Test_gamesServiceImpl_FindById_err(t *testing.T) {
 	assert.Nil(t, game)
 }
 
-func Test_hasLost(t *testing.T) {
+
+func Test_executeAfterShow(t *testing.T) {
+	settings := models.Settings{Height:9, Width:9, MinesQuantity: 3}
+	gameUuid := uuid.New()
+	game := &models.Game{ID: gameUuid, Settings: settings}
 	field := &models.Field{Status: models.FieldStatusShown}
 
-	status, err := hasLost(field, nil, nil)
+	fieldsRepository := new(mocks.FieldsRepository)
+	fieldsRepository.On("FindByGameId", &gameUuid).Return(&[]models.Field{{}, {}}, nil)
+
+	gameService := gamesServiceImpl{nil, fieldsRepository}
+
+	status, err := executeAfterShow(gameService, field, game)
 
 	assert.Nil(t, status)
 	assert.Nil(t, err)
 }
 
-func Test_hasLost_status_lost(t *testing.T) {
+func Test_executeAfterShow_FindByGameId_error(t *testing.T) {
+	settings := models.Settings{Height:9, Width:9, MinesQuantity: 3}
+	gameUuid := uuid.New()
+	game := &models.Game{ID: gameUuid, Settings: settings}
+	field := &models.Field{Status: models.FieldStatusShown}
+
+	fieldsRepository := new(mocks.FieldsRepository)
+	errExpected := errors.NewInternalServerApiError(errors.NewError("panic"))
+	fieldsRepository.On("FindByGameId", &gameUuid).Return(nil, errExpected)
+
+	gameService := gamesServiceImpl{nil, fieldsRepository}
+
+	status, err := executeAfterShow(gameService, field, game)
+
+	assert.Nil(t, status)
+	assert.Equal(t, errExpected, err)
+}
+
+func Test_executeAfterShow_status_lost(t *testing.T) {
 	field := &models.Field{Status: models.FieldStatusShown, Value: &models.MineString}
 
-	status, err := hasLost(field, nil, nil)
+	gameService := gamesServiceImpl{}
+
+	status, err := executeAfterShow(gameService, field, nil)
 
 	assert.Equal(t, models.GameStatusLost, *status)
 	assert.Nil(t, err)
 }
 
-func Test_hasWon(t *testing.T) {
+func Test_executeAfterFlag(t *testing.T) {
 	settings := models.Settings{MinesQuantity: 3}
 	gameUuid := uuid.New()
 	game := &models.Game{ID: gameUuid, Settings: settings}
 	field := &models.Field{Status: models.FieldStatusShown, GameId: gameUuid}
 
-	gamesRepositoryMock := new(mocks.FieldsRepository)
-	gamesRepositoryMock.On("FindMineFieldsFlaggedByGame", &gameUuid).Return(&[]models.Field{{}, {}}, nil)
+	fieldsRepository := new(mocks.FieldsRepository)
+	fieldsRepository.On("FindMineFieldsFlaggedByGame", &gameUuid).Return(&[]models.Field{{}, {}}, nil)
 
-	status, err := hasWon(field, game, gamesRepositoryMock)
+	gameService := gamesServiceImpl{nil, fieldsRepository}
+
+	status, err := executeAfterFlag(gameService, field, game)
 
 	assert.Nil(t, status)
 	assert.Nil(t, err)
 }
 
-func Test_hasWon_status_won(t *testing.T) {
+func Test_executeAfterFlag_status_won(t *testing.T) {
 	settings := models.Settings{MinesQuantity: 3}
 	gameUuid := uuid.New()
 	game := &models.Game{ID: gameUuid, Settings: settings}
 	field := &models.Field{Status: models.FieldStatusShown, GameId: gameUuid}
 
-	gamesRepositoryMock := new(mocks.FieldsRepository)
-	gamesRepositoryMock.On("FindMineFieldsFlaggedByGame", &gameUuid).Return(&[]models.Field{{}, {}, {}}, nil)
+	fieldsRepository := new(mocks.FieldsRepository)
+	fieldsRepository.On("FindMineFieldsFlaggedByGame", &gameUuid).Return(&[]models.Field{{}, {}, {}}, nil)
 
-	status, err := hasWon(field, game, gamesRepositoryMock)
+	gamesService := gamesServiceImpl{nil, fieldsRepository}
+
+	status, err := executeAfterFlag(gamesService, field, game)
 
 	assert.Equal(t, models.GameStatusWon, *status)
 	assert.Nil(t, err)
 }
 
-func Test_hasWon_status_error(t *testing.T) {
+func Test_executeAfterFlag_status_error(t *testing.T) {
 	settings := models.Settings{MinesQuantity: 3}
 	gameUuid := uuid.New()
 	game := &models.Game{ID: gameUuid, Settings: settings}
 	field := &models.Field{Status: models.FieldStatusShown, GameId: gameUuid}
 
-	gamesRepositoryMock := new(mocks.FieldsRepository)
+	fieldsRepository := new(mocks.FieldsRepository)
 	errExpected := errors.NewInternalServerApiError(errors.NewError("panic"))
-	gamesRepositoryMock.On("FindMineFieldsFlaggedByGame", &gameUuid).
+	fieldsRepository.On("FindMineFieldsFlaggedByGame", &gameUuid).
 		Return(nil, errExpected)
 
-	status, err := hasWon(field, game, gamesRepositoryMock)
+	gamesService := gamesServiceImpl{nil, fieldsRepository}
+
+	status, err := executeAfterFlag(gamesService, field, game)
 
 	assert.Nil(t, status)
 	assert.Equal(t, errExpected, err)
@@ -408,3 +443,43 @@ func Test_gamesServiceImpl_ExecuteFieldAction_game_update_error(t *testing.T) {
 	assert.Equal(t, errExpected, err)
 }
 
+func Test_showAdjacentFields(t *testing.T) {
+	settingsMock := &models.Settings{Height: 3, Width: 3, MinesQuantity: 1}
+
+	minefield := make([][]models.Field, settingsMock.Height)
+	for index := range minefield {
+		minefield[index] = make([]models.Field, settingsMock.Width)
+	}
+
+	for y := 0; y < settingsMock.Height; y++ {
+		for x := 0; x < settingsMock.Width; x++ {
+			field := &(minefield)[y][x]
+			field.SetPosition(y, x)
+			field.SetInitialStatus()
+		}
+	}
+
+	minefield[1][2].SetInitialHintValue()
+	minefield[2][1].SetInitialHintValue()
+	minefield[2][2].SetMine()
+
+	initialField := &models.Field{PositionY: 0, PositionX: 0, Status: models.FieldStatusHidden}
+
+	fieldsRepositoryMock := new(mocks.FieldsRepository)
+	fieldsRepositoryMock.On("Update", mock.Anything).Return(nil)
+
+	gamesService := gamesServiceImpl{nil, fieldsRepositoryMock}
+
+	showAdjacentFields(gamesService ,initialField, &minefield, settingsMock)
+
+	assert.Equal(t, models.FieldStatusShown, minefield[1][0].Status)
+	assert.Equal(t, models.FieldStatusShown, minefield[2][0].Status)
+	assert.Equal(t, models.FieldStatusShown, minefield[0][1].Status)
+	assert.Equal(t, models.FieldStatusShown, minefield[1][0].Status)
+	assert.Equal(t, models.FieldStatusShown, minefield[2][0].Status)
+
+	assert.Equal(t, models.FieldStatusShown, minefield[1][1].Status)
+	assert.Equal(t, models.FieldStatusShown, minefield[1][2].Status)
+	assert.Equal(t, models.FieldStatusShown, minefield[1][2].Status)
+	assert.Equal(t, models.FieldStatusHidden, minefield[2][2].Status)
+}

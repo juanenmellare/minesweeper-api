@@ -17,6 +17,31 @@ type FieldsRepository struct {
 	mock.Mock
 }
 
+// FindByGameId provides a mock function with given fields: gameUuid
+func (_m *FieldsRepository) FindByGameId(gameUuid *uuid.UUID) (*[]models.Field, *errors.ApiError) {
+	ret := _m.Called(gameUuid)
+
+	var r0 *[]models.Field
+	if rf, ok := ret.Get(0).(func(*uuid.UUID) *[]models.Field); ok {
+		r0 = rf(gameUuid)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*[]models.Field)
+		}
+	}
+
+	var r1 *errors.ApiError
+	if rf, ok := ret.Get(1).(func(*uuid.UUID) *errors.ApiError); ok {
+		r1 = rf(gameUuid)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*errors.ApiError)
+		}
+	}
+
+	return r0, r1
+}
+
 // FindByIdAndGameId provides a mock function with given fields: _a0, gameUuid
 func (_m *FieldsRepository) FindByIdAndGameId(_a0 *uuid.UUID, gameUuid *uuid.UUID) (*models.Field, *errors.ApiError) {
 	ret := _m.Called(_a0, gameUuid)

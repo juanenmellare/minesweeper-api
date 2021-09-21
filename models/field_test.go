@@ -34,8 +34,7 @@ func TestField_IsMine(t *testing.T) {
 }
 
 func TestField_IsMine_false(t *testing.T) {
-	value := "foo"
-	field := Field{Value: &value}
+	field := Field{Value: nil}
 
 	assert.False(t, field.IsMine())
 }
@@ -79,9 +78,17 @@ func TestField_SetPosition(t *testing.T) {
 func TestField_SetInitialValue(t *testing.T) {
 	field := Field{}
 
-	field.SetInitialValue()
+	field.SetInitialStatus()
 
 	assert.Equal(t, FieldStatusHidden, field.Status)
+}
+
+func TestField_Show(t *testing.T) {
+	field := Field{}
+
+	field.Show()
+
+	assert.Equal(t, FieldStatusShown, field.Status)
 }
 
 func TestField_SetStatus(t *testing.T) {
