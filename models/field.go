@@ -26,6 +26,10 @@ func (f *Field) SetInitialHintValue() {
 	f.setValue("1")
 }
 
+func (f *Field) HideValue() {
+	f.setValue("*")
+}
+
 func (f *Field) IncrementHintValue() {
 	intValue, _ := strconv.Atoi(*f.Value)
 	value := fmt.Sprintf("%v", intValue+1)

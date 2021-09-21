@@ -139,13 +139,14 @@ func Test_gamesControllerImpl_ExecuteFieldAction(t *testing.T) {
 	c.Params = append(c.Params, gin.Param{Key: "action", Value: action})
 
 	gamesServiceMock := new(mocks.GamesService)
+	gameStatus := models.GameStatusLost
 	gamesServiceMock.On("ExecuteFieldAction", &gameUuid, &fieldUuid, models.FieldStatusShown).
-		Return(nil)
+		Return(&gameStatus, nil)
 	gamesController := NewGamesController(gamesServiceMock)
 
 	gamesController.ExecuteFieldAction(c)
 
-	expectedJsonString := "{\"message\":\"field SHOWN\"}"
+	expectedJsonString := "{\"game_status\":\"LOST\",\"message\":\"field shown\"}"
 
 	assert.Equal(t, http.StatusAccepted, w.Code)
 	assert.Equal(t, expectedJsonString, w.Body.String())
@@ -185,7 +186,7 @@ func Test_gamesControllerImpl_ExecuteFieldAction_error(t *testing.T) {
 	gamesServiceMock := new(mocks.GamesService)
 	err := errors.NewNotFoundError(errors.NewError("not_found"))
 	gamesServiceMock.On("ExecuteFieldAction", &gameUuid, &fieldUuid, models.FieldStatusShown).
-		Return(err)
+		Return(nil, err)
 	gamesController := NewGamesController(gamesServiceMock)
 
 	gamesController.ExecuteFieldAction(c)
