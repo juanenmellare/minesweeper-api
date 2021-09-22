@@ -14,14 +14,14 @@ This project tries to adapt the game to an API RESTful version.
 | GET         | /ping       | Should return 'pong' text if the application is ok |
 
 **Game:** 
-| Ref | Method      | Path                                       | Description             | Params & Body                                                       |
-| --- | ----------- | ------------------------------------------ | ----------------------- | ------------------------------------------------------------------- |
-| 1   | POST        | /v1/games                                  | Create Game             | body: `minesQuantity` (amount of mines), `height` (columns height), `width` (rows width)|
-| 2   | GET         | /v1/games/:uuid                            | Get Game                     | params: `uuid` (game uuid)                                    |
-| 3   | PUT         | /v1/games/:uuid/field/:field-uuid/show     | Show field                   | params: `uuid` (game uuid), `field-uuid` (field uuid to show) |
-| 4   | PUT         | /v1/games/:uuid/field/:field-uuid/flag     | Mark field as mine           | params: `uuid` (game uuid), `field-uuid` (field uuid to show) |
-| 5   | PUT         | /v1/games/:uuid/field/:field-uuid/hide     | Restore from mark            | params: `uuid` (game uuid), `field-uuid` (field uuid to show) |
-| 6   | PUT         | /v1/games/:uuid/field/:field-uuid/question | Mark field as possible mine  | params: `uuid` (game uuid), `field-uuid` (field uuid to show) |
+| Ref | Method      | Path                                        | Description             | Params & Body                                                       |
+| --- | ----------- | ------------------------------------------- | ----------------------- | --------------------------------------------------------------------|
+| 1   | POST        | /v1/games                                   | Create Game             | body: `minesQuantity` (amount of mines), `height` (columns height), `width` (rows width)|
+| 2   | GET         | /v1/games/:uuid                             | Get Game                     | params: `uuid` (game uuid)                                    |
+| 3   | PUT         | /v1/games/:uuid/fields/:field-uuid/show     | Show field                   | params: `uuid` (game uuid), `field-uuid` (field uuid to show) |
+| 4   | PUT         | /v1/games/:uuid/fields/:field-uuid/flag     | Mark field as mine           | params: `uuid` (game uuid), `field-uuid` (field uuid to show) |
+| 5   | PUT         | /v1/games/:uuid/fields/:field-uuid/hide     | Restore from mark            | params: `uuid` (game uuid), `field-uuid` (field uuid to show) |
+| 6   | PUT         | /v1/games/:uuid/fields/:field-uuid/question | Mark field as possible mine  | params: `uuid` (game uuid), `field-uuid` (field uuid to show) |
 
 ## Rules
 
@@ -141,7 +141,7 @@ make tests
 ```
 
 ```bash
-make tests-report    # Create a html report of coverage in the root project folder.
+make tests-report    # Create html report of coverage in the root project folder.
 ```
 
 ### Run API with Postgres (docker + live reload)
