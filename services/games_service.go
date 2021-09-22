@@ -140,9 +140,8 @@ func hideMinefieldValues(game *models.Game) {
 			hiddenMinefield[index] = field
 		}
 
+		game.Minefield = &hiddenMinefield
 	}
-
-	game.Minefield = &hiddenMinefield
 }
 
 func (g gamesServiceImpl) FindById(uuid *uuid.UUID, hasToPreload bool) (*models.Game, *errors.ApiError) {
